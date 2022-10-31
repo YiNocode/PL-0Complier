@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{1d6625b7-fe3d-4c3c-8867-9ad4ad345b4e}</ProjectGuid>
+    <ProjectGuid>{f944240c-3f56-4402-a7ab-b3394951ed2e}</ProjectGuid>
     <RootNamespace>PL0Complier编译原理课程设计</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -139,14 +139,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\LexicalAnalyzer.h" />
+    <None Include="..\..\上机练习一.doc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\LexicalAnalyzer.cpp" />
-    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="LexicalAnalyzer.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\..\..\..\..\..\Users\L_yn7417\Desktop\单词符号及内部表示.txt" />
+    <Text Include="单词符号及内部表示.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LexicalAnalyzer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
