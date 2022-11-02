@@ -145,9 +145,6 @@
     <ClCompile Include="..\LexicalAnalyzer.cpp" />
     <ClCompile Include="..\main.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\..\..\..\..\Users\L_yn7417\Desktop\单词符号及内部表示.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

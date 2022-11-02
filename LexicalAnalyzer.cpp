@@ -1,20 +1,19 @@
 #include"LexicalAnalyzer.h"
 std::string inputBuffer;	//ÊäÈë»º³åÇø
-std::string scanBuffer;		//É¨Ãè»º³åÇø
 std::string strToken;	//´æ·Å¹¹³Éµ¥´Ê·ûºÅµÄ×Ö·û´®
 int beginIndex;			//ÆğµãÖ¸Ê¾Æ÷
 int seekIndex;			//ËÑË÷Ö¸Ê¾Æ÷
 char ch;					//×Ö·û±äÁ¿£¬´æ·Å×îĞÂ¶Á½øµÄÔ´³ÌĞò×Ö·û
-void preprocesser(){		//½«¹Ì¶¨³¤¶ÈµÄÊäÈë×Ö·û×°ÈëÉ¨Ãè»º³åÇøÖĞ
-
-	std::string temp = inputBuffer.substr(beginIndex, WordsLen);
-	scanBuffer += temp;
-}
+std::string reserveTable[13] = { "begin","call",
+					"const","do","end","if",
+					"odd","procedure",
+					"read","then",
+					"var","while","write" };	//±£Áô×Ö±í£¨±àÂë1-13£©
 void GetChar() {			//½«ÏÂÒ»ÊäÈë×Ö·û¶Áµ½chÖĞ£¬ËÑË÷Ö¸Ê¾Æ÷ÏòÇ°ÒÆÒ»×Ö·ûÎ»ÖÃ
-	ch = scanBuffer[seekIndex++];
+	ch = inputBuffer[seekIndex++];
 }
 void GetBC() {				//¼ì²échÖĞµÄ×Ö·ûÊÇ·ñÎª¿Õ°×¡£ÈôÊÇ£¬Ôòµ÷ÓÃGetCharÖ±ÖÁchÖĞ½øÈëÒ»¸ö·Ç¿Õ°××Ö·û
-	while (ch == ' ') {
+	while (ch == ' '||ch == '\n') {
 		GetChar();
 	}
 }
@@ -30,7 +29,12 @@ bool IsDigit() {			//ÅĞ¶ÏchÖĞµÄ×Ö·ûÊÇ·ñÎªÊı×Ö
 	return false;
 }
 int Reserve() {				//¶ÔstrTokenÖĞµÄ×Ö·û²éÕÒ±£Áô×Ö±í£¬ÈôËüÊÇÒ»¸ö±£Áô×ÖÔò·µ»ØËüµÄ±àÂë£¬·ñÔò·µ»Ø0Öµ
-
+	int i = 0;
+	for (i = 0; i < 13; i++) {
+		if (strToken.compare(reserveTable[i])==0) {
+			return (i + 1);
+		}
+	}
 	return 0;
 }
 void Retract(){				//½«ËÑË÷Ö¸Ê¾Æ÷»Øµ÷Ò»¸ö×Ö·ûÎ»ÖÃ£¬½«chÖÃÎª¿Õ°××Ö·û
@@ -52,8 +56,6 @@ int InsertConst(std::string strT){			//½«strTokenÖĞµÄ³£Êı²åÈë³£Êı±í£¬·µ»Ø³£Êı±íÖ
 Token LexicalAnalzer()
 {
 	int code = 0, value = 0;
-	std::cin >> inputBuffer;
-	preprocesser();
 	GetChar();
 	GetBC();
 	if (IsLetter()) {
@@ -63,9 +65,9 @@ Token LexicalAnalzer()
 		}
 		Retract();
 		code = Reserve();
-		if (code == 0) {
+		if (code == 0) {	//²»ÊÇ±£Áô×Ö£¬²åÈë·ûºÅ±í
 			value = InsertId(strToken);
-			return std::make_pair(25, value);
+			return std::make_pair($ID, value);
 		}
 		else {
 			return std::make_pair(code, value);
@@ -78,13 +80,63 @@ Token LexicalAnalzer()
 		}
 		Retract();
 		value = InsertConst(strToken);
-		return std::make_pair(2, value);
+		return std::make_pair($INT, value);
 	}
 	else if (ch == '=') {
-		return std::make_pair(17, -1);
+		return std::make_pair($EQ, -1);
 	}
 	else if (ch == ';') {
-		return std::make_pair(26, -1);
+		return std::make_pair($SEM, -1);
+	}
+	else if (ch == '+') {
+		return std::make_pair($ADD, -1);
+	}
+	else if (ch == '-') {
+		return std::make_pair($SUB, -1);
+	}
+	else if (ch == '*') {
+		return std::make_pair($MUL, -1);
+	}
+	else if (ch == '/') {
+		return std::make_pair($DIV, -1);
+	}
+	else if (ch == ',') {
+		return std::make_pair($COMMA, -1);
+	}
+	else if (ch == '(') {
+		return std::make_pair($LPAR, -1);
+	}
+	else if (ch == ')') {
+		return std::make_pair($RPAR, -1);
+	}
+	else if (ch == '>') {
+		GetChar();
+		if (ch == '=') {
+			return std::make_pair($LESSEQ, -1);
+		}
+		Retract();
+		return std::make_pair($GREAT, -1);
+	}
+	else if (ch == '<') {
+		GetChar();
+		if (ch == '>') {
+			return std::make_pair($NEQ, -1);
+		}
+		else if (ch == '=') {
+			return std::make_pair($GREATEQ, -1);
+		}
+		else {
+			Retract(); return std::make_pair($LESS, -1);
+		}
+		
+	}
+	else if (ch == ':') {
+		GetChar();
+		if (ch == '=') {
+			return std::make_pair($ASSIGN, -1);
+		}
+		Retract();
+		return std::make_pair(-1, -1);	//´íÎóÉùÃ÷
 	}
 
 	else return std::make_pair(-1,-1);	//´íÎóÉùÃ÷

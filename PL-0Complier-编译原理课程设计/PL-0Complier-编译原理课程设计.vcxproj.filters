@@ -27,9 +27,4 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\..\..\..\..\Users\L_yn7417\Desktop\单词符号及内部表示.txt">
-      <Filter>资源文件</Filter>
-    </Text>
-  </ItemGroup>
 </Project>
