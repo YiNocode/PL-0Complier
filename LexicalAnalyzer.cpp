@@ -4,18 +4,27 @@ std::string strToken;	//´æ·Å¹¹³Éµ¥´Ê·ûºÅµÄ×Ö·û´®
 int beginIndex;			//ÆğµãÖ¸Ê¾Æ÷
 int seekIndex;			//ËÑË÷Ö¸Ê¾Æ÷
 char ch;					//×Ö·û±äÁ¿£¬´æ·Å×îĞÂ¶Á½øµÄÔ´³ÌĞò×Ö·û
-std::string reserveTable[13] = { "begin","call",
+bool sucFlag = true;				//±ê¼Ç´Ê·¨·ÖÎöÊÇ·ñ³É¹¦
+int row, col;		//´íÎóĞÅÏ¢µÄĞĞÁĞ
+std::string reserveTable[15] = { "begin","call",
 					"const","do","end","if",
 					"odd","procedure",
 					"read","then",
-					"var","while","write" };	//±£Áô×Ö±í£¨±àÂë1-13£©
+					"var","while","write" ,"program","odd"};	//±£Áô×Ö±í£¨±àÂë1-15£©
 void GetChar() {			//½«ÏÂÒ»ÊäÈë×Ö·û¶Áµ½chÖĞ£¬ËÑË÷Ö¸Ê¾Æ÷ÏòÇ°ÒÆÒ»×Ö·ûÎ»ÖÃ
+	if (ch == '\n') {
+		col = 1;
+		row++;
+	}
 	ch = inputBuffer[seekIndex++];
+	col++;
+	
 }
 void GetBC() {				//¼ì²échÖĞµÄ×Ö·ûÊÇ·ñÎª¿Õ°×¡£ÈôÊÇ£¬Ôòµ÷ÓÃGetCharÖ±ÖÁchÖĞ½øÈëÒ»¸ö·Ç¿Õ°××Ö·û
 	while (ch == ' '||ch == '\n') {
 		GetChar();
 	}
+	
 }
 void Concat() {				//½«chÖĞµÄ×Ö·ûÁ¬½Óµ½strTokenÖ®ºó¡£
 	strToken += ch;
@@ -30,7 +39,7 @@ bool IsDigit() {			//ÅĞ¶ÏchÖĞµÄ×Ö·ûÊÇ·ñÎªÊı×Ö
 }
 int Reserve() {				//¶ÔstrTokenÖĞµÄ×Ö·û²éÕÒ±£Áô×Ö±í£¬ÈôËüÊÇÒ»¸ö±£Áô×ÖÔò·µ»ØËüµÄ±àÂë£¬·ñÔò·µ»Ø0Öµ
 	int i = 0;
-	for (i = 0; i < 13; i++) {
+	for (i = 0; i < 15; i++) {
 		if (strToken.compare(reserveTable[i])==0) {
 			return (i + 1);
 		}
@@ -39,6 +48,7 @@ int Reserve() {				//¶ÔstrTokenÖĞµÄ×Ö·û²éÕÒ±£Áô×Ö±í£¬ÈôËüÊÇÒ»¸ö±£Áô×ÖÔò·µ»ØËüµÄ±
 }
 void Retract(){				//½«ËÑË÷Ö¸Ê¾Æ÷»Øµ÷Ò»¸ö×Ö·ûÎ»ÖÃ£¬½«chÖÃÎª¿Õ°××Ö·û
 	seekIndex--;
+	col--;
 	ch = ' ';
 }
 int InsertId(std::string strT){				//½«strTokenÖĞµÄ±êÊ¶·û²åÈë·ûºÅ±í£¬·µ»Ø·ûºÅ±íÖ¸Õë
@@ -49,6 +59,7 @@ int InsertConst(std::string strT){			//½«strTokenÖĞµÄ³£Êı²åÈë³£Êı±í£¬·µ»Ø³£Êı±íÖ
 
 	return 0;
 }
+
 //todo:·ûºÅ±íºÍ³£Êı±í
 
 
@@ -56,6 +67,7 @@ int InsertConst(std::string strT){			//½«strTokenÖĞµÄ³£Êı²åÈë³£Êı±í£¬·µ»Ø³£Êı±íÖ
 Token LexicalAnalzer()
 {
 	int code = 0, value = 0;
+	strToken.clear();
 	GetChar();
 	GetBC();
 	if (IsLetter()) {
@@ -77,6 +89,10 @@ Token LexicalAnalzer()
 		while (IsDigit()) {
 			Concat();
 			GetChar();
+			if (IsLetter()) {
+				RaiseError($IllegalIdentifier);
+				return std::make_pair(-1, -1);	//´íÎóÉùÃ÷
+			}
 		}
 		Retract();
 		value = InsertConst(strToken);
@@ -136,10 +152,17 @@ Token LexicalAnalzer()
 			return std::make_pair($ASSIGN, -1);
 		}
 		Retract();
+		sucFlag = false;
+		RaiseError($UndefinedSymbol);
+		return std::make_pair(-1, -1);	//´íÎóÉùÃ÷
+		
+	}
+	else if(ch == '#'){
+		return std::make_pair(-2, -1); //½áÊøÉùÃ÷
+	}	
+	else {
 		return std::make_pair(-1, -1);	//´íÎóÉùÃ÷
 	}
-
-	else return std::make_pair(-1,-1);	//´íÎóÉùÃ÷
 
 	
 }

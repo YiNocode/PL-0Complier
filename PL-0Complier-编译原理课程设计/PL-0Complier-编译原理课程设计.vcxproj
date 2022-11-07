@@ -140,10 +140,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\LexicalAnalyzer.h" />
+    <ClInclude Include="PL0Common.h" />
+    <ClInclude Include="ProgramParser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\LexicalAnalyzer.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="PL0Common.cpp" />
+    <ClCompile Include="ProgramParser.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
