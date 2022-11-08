@@ -1,6 +1,7 @@
 #include"ProgramParser.h"
 std::vector<Token> tokenList;
 int curIndex;
+int tokenListLenth;
 Token LexicalAnalzer();
 void Prog()			//<prog> → program <id>；<block>	
 {
@@ -30,10 +31,10 @@ void Block()		//<block> → [<condecl>][<vardecl>][<proc>]<body>
 	if (tokenList[curIndex].first == $CONST) {
 		Condecl();
 	}
-	else if (tokenList[curIndex].first == $VAR) {
+	if (tokenList[curIndex].first == $VAR) {
 		Vardecl();
 	}
-	else if (tokenList[curIndex].first == $PROCEDUCE) {
+	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Proc();
 	}
 	if (tokenList[curIndex].first == $BEGIN) {
@@ -193,13 +194,19 @@ void Statement()		/*
 						*/
 {
 	if (Id()) {
+		Advance();
 		if (tokenList[curIndex].first == $ASSIGN) {
 			Advance();
 		}
 		else {
 			RaiseError($AssignExpected);
 		}
-			Exp();
+		if (Exp()) {
+			Advance();
+		}
+		else {
+			RaiseError($ExpressionExpected);
+		}
 	}
 	else if (tokenList[curIndex].first == $IF) {
 		Advance();
@@ -244,6 +251,7 @@ void Statement()		/*
 		if (Exp()) {
 			Advance();
 			while (tokenList[curIndex].first == $COMMA) {
+				Advance();
 				if (Exp()) {
 					Advance();
 				}
@@ -354,36 +362,76 @@ bool Exp()			//<exp> → [+|-]<term>{<aop><term>}
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB) {
 		Advance();
 	}
-	Term();
-	while (Aop()) {
+	if (Term())
+	{
 		Advance();
-		Term();
-	}
-	return true;
-}
-
-void Term()			//<term> → <factor>{<mop><factor>}
-{
-	Factor();
-	while (Mop()) {
-		Advance();
-		Factor();
-	}
-}
-
-void Factor()			//<factor>→<id>|<integer>|(<exp>)
-{
-	if (Id()) {
-		Advance();
-	}
-	else if (Integer()) {
-		Advance();
-	}
-	else if (Exp()) {
-		Advance();
+		if (Aop()) {
+			while (Aop()) {
+				Advance();
+				if (Term())
+				{
+					Advance();
+				}
+				else {
+					curIndex--;
+					return false;
+				}
+			}
+			curIndex--;
+			return true;
+		}
+		else {
+			curIndex--;
+			return true;
+		}
+		
 	}
 	else {
-		RaiseError($InvalidExpression);
+		return false;
+	}
+}
+
+bool Term()			//<term> → <factor>{<mop><factor>}
+{
+	if (Factor()) {
+		Advance();
+		if (Mop()) {
+			while (Mop()) {
+				Advance();
+				if (Factor()) {
+					Advance();
+				}
+				else {
+					curIndex--;
+					return false;
+				}
+			}
+			curIndex--;
+			return true;
+		}
+		else {
+			curIndex--;
+			return true;
+		}
+		
+	}
+	else
+		return false;
+}
+
+bool Factor()			//<factor>→<id>|<integer>|(<exp>)
+{
+	if (Id()) {
+		return true;
+	}
+	else if (Integer()) {
+		return true;
+	}
+	else if (Exp()) {
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
@@ -434,16 +482,33 @@ bool Integer()
 	}
 }
 void Advance() {
-	Token temp = LexicalAnalzer();
-	if (temp.first == -2) {
-		std::cout << "分析完成！" << '\n';
+	if (isFinish) {
+		if (curIndex < tokenListLenth) {
+			curIndex++;
+		}
 	}
-	if (temp.first == -1) {
-		std::cout << "分析失败！" << '\n';
+	else {
+		if (curIndex == tokenListLenth - 1) {
+				Token temp = LexicalAnalzer();
+				std::cout << "<" << temp.first << "," << temp.second << ">" << '\n';
+				tokenList.push_back(temp);
+				tokenListLenth++;
+				curIndex++;
+				if (temp.first == -1) {
+					std::cout << "词法分析出错！" << '\n';
+				}
+				if (temp.first == -2) {
+					std::cout << "读取完成";
+					isFinish = true;
+				}
+		}
+		else {
+			if (curIndex < tokenListLenth) {
+				curIndex++;
+			}
+		}
 	}
-	std::cout << "<" << temp.first << "," << temp.second << ">" << '\n';
-	tokenList.push_back(temp);
-	curIndex++;
+
 }
 void ProgramParser() {
 	curIndex = -1;

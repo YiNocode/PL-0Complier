@@ -7,6 +7,7 @@
 #include<vector>
 #include<tuple>
 extern int row, col;		//错误信息的行列
+extern bool isFinish;
 typedef std::pair<int, int> Token;
 //保留字及运算符定义
 #define $BEGIN 1
@@ -24,24 +25,23 @@ typedef std::pair<int, int> Token;
 #define $WRITE 13
 #define $PROGRAM 14
 #define $ELSE 15
-#define $ODD 16
-#define $ADD 17	//"+",
-#define $SUB 18 //"-",
-#define	$MUL 19	 //"*",
-#define $DIV 20 //"/",
-#define $EQ 21 //"=", 
-#define $NEQ 22 //"<>",
-#define $LESS 23//"<", 
-#define $LESSEQ 24//"<=", 
-#define $GREAT 25//">",
-#define $GREATEQ 26//">=",
-#define $ASSIGN 27//":=", 
-#define $LPAR 28//"(",
-#define $RPAR 29//")", 
-#define $COMMA	30//",",
-#define $SEM 31//";",
-#define $ID 32
-#define $INT 33
+#define $ADD 16	//"+",
+#define $SUB 17 //"-",
+#define	$MUL 18	 //"*",
+#define $DIV 19 //"/",
+#define $EQ 20 //"=", 
+#define $NEQ 21 //"<>",
+#define $LESS 22//"<", 
+#define $LESSEQ 23//"<=", 
+#define $GREAT 24//">",
+#define $GREATEQ 25//">=",
+#define $ASSIGN 26//":=", 
+#define $LPAR 27//"(",
+#define $RPAR 28//")", 
+#define $COMMA	29//",",
+#define $SEM 30//";",
+#define $ID 31
+#define $INT 32
 //错误码定义
 #define $UndefinedError 0
 #define $UndefinedSymbol 1

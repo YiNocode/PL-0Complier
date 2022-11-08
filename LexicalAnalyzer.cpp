@@ -6,22 +6,25 @@ int seekIndex;			//搜索指示器
 char ch;					//字符变量，存放最新读进的源程序字符
 bool sucFlag = true;				//标记词法分析是否成功
 int row, col;		//错误信息的行列
-std::string reserveTable[15] = { "begin","call",
+std::string reserveTable[16] = { "begin","call",
 					"const","do","end","if",
 					"odd","procedure",
 					"read","then",
-					"var","while","write" ,"program","odd"};	//保留字表（编码1-15）
+					"var","while","write" ,"program","else"};	//保留字表（编码1-15）
 void GetChar() {			//将下一输入字符读到ch中，搜索指示器向前移一字符位置
 	if (ch == '\n') {
 		col = 1;
 		row++;
 	}
-	ch = inputBuffer[seekIndex++];
-	col++;
+	if (seekIndex < inputBuffer.length()) {
+		ch = inputBuffer[seekIndex++];
+		col++;
+	}
+	
 	
 }
 void GetBC() {				//检查ch中的字符是否为空白。若是，则调用GetChar直至ch中进入一个非空白字符
-	while (ch == ' '||ch == '\n') {
+	while (ch == ' '||ch == '\n'||ch=='\t') {
 		GetChar();
 	}
 	
@@ -79,9 +82,11 @@ Token LexicalAnalzer()
 		code = Reserve();
 		if (code == 0) {	//不是保留字，插入符号表
 			value = InsertId(strToken);
+			
 			return std::make_pair($ID, value);
 		}
 		else {
+			
 			return std::make_pair(code, value);
 		}
 	}
@@ -90,77 +95,95 @@ Token LexicalAnalzer()
 			Concat();
 			GetChar();
 			if (IsLetter()) {
-				RaiseError($IllegalIdentifier);
+				RaiseError($IllegalIdentifier); 
 				return std::make_pair(-1, -1);	//错误声明
 			}
 		}
 		Retract();
-		value = InsertConst(strToken);
+		value = InsertConst(strToken); 
 		return std::make_pair($INT, value);
 	}
 	else if (ch == '=') {
+		
 		return std::make_pair($EQ, -1);
 	}
 	else if (ch == ';') {
+		
 		return std::make_pair($SEM, -1);
 	}
 	else if (ch == '+') {
+		
 		return std::make_pair($ADD, -1);
 	}
 	else if (ch == '-') {
+		
 		return std::make_pair($SUB, -1);
 	}
 	else if (ch == '*') {
+		
 		return std::make_pair($MUL, -1);
 	}
 	else if (ch == '/') {
+		
 		return std::make_pair($DIV, -1);
 	}
 	else if (ch == ',') {
+		
 		return std::make_pair($COMMA, -1);
 	}
 	else if (ch == '(') {
+		
 		return std::make_pair($LPAR, -1);
 	}
 	else if (ch == ')') {
+		
 		return std::make_pair($RPAR, -1);
 	}
 	else if (ch == '>') {
 		GetChar();
 		if (ch == '=') {
+			
 			return std::make_pair($LESSEQ, -1);
 		}
-		Retract();
-		return std::make_pair($GREAT, -1);
+		else {
+			Retract(); 
+			return std::make_pair($GREAT, -1);
+		}
 	}
 	else if (ch == '<') {
 		GetChar();
 		if (ch == '>') {
+			
 			return std::make_pair($NEQ, -1);
 		}
 		else if (ch == '=') {
+			
 			return std::make_pair($GREATEQ, -1);
 		}
 		else {
-			Retract(); return std::make_pair($LESS, -1);
+			Retract(); 
+			return std::make_pair($LESS, -1);
 		}
 		
 	}
 	else if (ch == ':') {
 		GetChar();
 		if (ch == '=') {
+			
 			return std::make_pair($ASSIGN, -1);
 		}
 		Retract();
 		sucFlag = false;
-		RaiseError($UndefinedSymbol);
+		RaiseError($UndefinedSymbol); 
 		return std::make_pair(-1, -1);	//错误声明
 		
 	}
-	else if(ch == '#'){
+	else if(ch == '.'){
+	
 		return std::make_pair(-2, -1); //结束声明
 	}	
 	else {
+	
 		return std::make_pair(-1, -1);	//错误声明
 	}
 

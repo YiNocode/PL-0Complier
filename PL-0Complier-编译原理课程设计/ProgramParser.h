@@ -2,6 +2,7 @@
 #include"PL0Common.h"
 extern std::vector<Token> tokenList;
 extern int curIndex;
+extern int tokenListLenth;
 void Prog();		//<prog> ¡ú program <id>£»<block>	
 void Block();		//<block> ¡ú [<condecl>][<vardecl>][<proc>]<body>
 void Condecl();		//<condecl> ¡ú const <const>{,<const>};
@@ -18,8 +19,8 @@ void Statement();	/*<statement> ¡ú <id> := <exp>
 						| write(<exp>{, <exp>})*/
 void Lexp();		//<lexp> ¡ú <exp> <lop> <exp>|odd <exp>
 bool Exp();			//<exp> ¡ú [+|-]<term>{<aop><term>}
-void Term();		//<term> ¡ú <factor>{<mop><factor>}
-void Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
+bool Term();		//<term> ¡ú <factor>{<mop><factor>}
+bool Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
 bool Lop();			//<lop> ¡ú =|<>|<|<=|>|>=
 bool Aop();			//<aop> ¡ú + | -
 bool Mop();			//<mop> ¡ú *|/

@@ -1,4 +1,5 @@
 #include"PL0Common.h"
+bool isFinish;
 void RaiseError(int errCode) {
 	switch (errCode)
 	{
@@ -75,3 +76,5 @@ void RaiseError(int errCode) {
 		break;
 	}
 }
+
+

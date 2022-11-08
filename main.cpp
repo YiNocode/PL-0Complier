@@ -4,13 +4,14 @@ int main()
 {
 	row = 1;
 	col = 1;
-	char stop = '#';
+	char stop = '.';
+	isFinish = false;
 	std::ifstream source("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\test.txt");
 	if (!source.is_open()) {
 		std::cout << "打开文件失败！";
 	}
-	//std::ofstream intermediate("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\intermediate.dat",std::ios::out|std::ios::binary);
-	std::getline(source, inputBuffer,stop);
+	std::getline(source,inputBuffer,stop);
+	std::cout << inputBuffer << '\n';
 	inputBuffer += stop;
 	source.close();
 	//intermediate.close();
