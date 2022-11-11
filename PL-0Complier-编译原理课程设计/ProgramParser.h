@@ -2,7 +2,8 @@
 #include"PL0Common.h"
 extern std::vector<Token> tokenList;
 extern int curIndex;
-extern int tokenListLenth;
+extern int tokenListLenth; 
+extern std::vector<std::string> errBox;
 void Prog();		//<prog> → program <id>；<block>	
 void Block();		//<block> → [<condecl>][<vardecl>][<proc>]<body>
 void Condecl();		//<condecl> → const <const>{,<const>};
@@ -18,16 +19,18 @@ void Statement();	/*<statement> → <id> := <exp>
 						| read(<id>{，<id>})
 						| write(<exp>{, <exp>})*/
 void Lexp();		//<lexp> → <exp> <lop> <exp>|odd <exp>
-bool Exp();			//<exp> → [+|-]<term>{<aop><term>}
-bool Term();		//<term> → <factor>{<mop><factor>}
-bool Factor();		//<factor>→<id>|<integer>|(<exp>)
-bool Lop();			//<lop> → =|<>|<|<=|>|>=
-bool Aop();			//<aop> → + | -
-bool Mop();			//<mop> → *|/
-bool Id();			//<id> → l{l|d}   （注：l表示字母）
-bool Integer();		//<integer> → d{d}
+void Exp();			//<exp> → [+|-]<term>{<aop><term>}
+void Term();		//<term> → <factor>{<mop><factor>}
+void Factor();		//<factor>→<id>|<integer>|(<exp>)
+void Lop();			//<lop> → =|<>|<|<=|>|>=
+void Aop();			//<aop> → + | -
+void Mop();			//<mop> → *|/
+void Id();			//<id> → l{l|d}   （注：l表示字母）
+void Integer();		//<integer> → d{d}
 void ProgramParser();
 void Advance();
+void ErrorHandle(int);
+void AdvanceWithError();
 /*
 <prog>：程序 ；<block>：块、程序体 ；<condecl>：常量说明 ；<const>：常量；
 <vardecl>：变量说明 ；<proc>：分程序 ； <body>：复合语句 ；<statement>：语句；

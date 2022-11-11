@@ -6,6 +6,7 @@ int main()
 	col = 1;
 	char stop = '.';
 	isFinish = false;
+	isError = false;
 	std::ifstream source("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\test.txt");
 	if (!source.is_open()) {
 		std::cout << "打开文件失败！";

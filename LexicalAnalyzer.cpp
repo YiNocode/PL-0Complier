@@ -10,8 +10,9 @@ std::string reserveTable[16] = { "begin","call",
 					"const","do","end","if",
 					"odd","procedure",
 					"read","then",
-					"var","while","write" ,"program","else"};	//保留字表（编码1-15）
-void GetChar() {			//将下一输入字符读到ch中，搜索指示器向前移一字符位置
+					"var","while","write" ,"program","else"};
+//保留字表（编码1-15）
+bool GetChar() {	//将下一输入字符读到ch中，搜索指示器向前移一字符位置
 	if (ch == '\n') {
 		col = 1;
 		row++;
@@ -20,8 +21,10 @@ void GetChar() {			//将下一输入字符读到ch中，搜索指示器向前移一字符位置
 		ch = inputBuffer[seekIndex++];
 		col++;
 	}
-	
-	
+	if (ch < 0) {
+		return false;
+	}
+	return true;
 }
 void GetBC() {				//检查ch中的字符是否为空白。若是，则调用GetChar直至ch中进入一个非空白字符
 	while (ch == ' '||ch == '\n'||ch=='\t') {
@@ -71,12 +74,15 @@ Token LexicalAnalzer()
 {
 	int code = 0, value = 0;
 	strToken.clear();
-	GetChar();
-	GetBC();
+	if (GetChar()) 
+		GetBC();
+	else return std::make_pair(-1, -1);
 	if (IsLetter()) {
 		while (IsLetter() || IsDigit()) {
 			Concat();
-			GetChar();
+			if (!GetChar()) {
+				return std::make_pair(-1, -1);
+			}
 		}
 		Retract();
 		code = Reserve();
@@ -85,17 +91,17 @@ Token LexicalAnalzer()
 			
 			return std::make_pair($ID, value);
 		}
-		else {
 			
-			return std::make_pair(code, value);
-		}
+		return std::make_pair(code, value);
+		
 	}
 	else if (IsDigit()) {
 		while (IsDigit()) {
 			Concat();
-			GetChar();
+			if (!GetChar()) {
+				return std::make_pair(-1, -1);
+			}
 			if (IsLetter()) {
-				RaiseError($IllegalIdentifier); 
 				return std::make_pair(-1, -1);	//错误声明
 			}
 		}
@@ -140,52 +146,61 @@ Token LexicalAnalzer()
 		return std::make_pair($RPAR, -1);
 	}
 	else if (ch == '>') {
-		GetChar();
-		if (ch == '=') {
-			
-			return std::make_pair($LESSEQ, -1);
+		if (GetChar()) {
+			if (ch == '=') {
+				return std::make_pair($LESSEQ, -1);
+			}
+			else {
+				Retract();
+				return std::make_pair($GREAT, -1);
+			}
 		}
 		else {
-			Retract(); 
-			return std::make_pair($GREAT, -1);
+			return std::make_pair(-1, -1);
 		}
 	}
 	else if (ch == '<') {
-		GetChar();
-		if (ch == '>') {
-			
-			return std::make_pair($NEQ, -1);
+		if (GetChar()) {
+			if (ch == '>') {
+
+				return std::make_pair($NEQ, -1);
+			}
+			else if (ch == '=') {
+
+				return std::make_pair($GREATEQ, -1);
+			}
+			else {
+				Retract();
+				return std::make_pair($LESS, -1);
+			}
 		}
-		else if (ch == '=') {
-			
-			return std::make_pair($GREATEQ, -1);
-		}
-		else {
-			Retract(); 
-			return std::make_pair($LESS, -1);
-		}
+		else return std::make_pair(-1, -1);
 		
 	}
 	else if (ch == ':') {
-		GetChar();
-		if (ch == '=') {
-			
-			return std::make_pair($ASSIGN, -1);
+		if (GetChar()) {
+			if (ch == '=') {
+				return std::make_pair($ASSIGN, -1);
+			}
+			Retract();
+			return std::make_pair(-1, -1);	//错误声明
 		}
-		Retract();
-		sucFlag = false;
-		RaiseError($UndefinedSymbol); 
-		return std::make_pair(-1, -1);	//错误声明
+		else {
+			 return std::make_pair(-1, -1);
+		}
 		
 	}
 	else if(ch == '.'){
-	
 		return std::make_pair(-2, -1); //结束声明
 	}	
 	else {
-	
-		return std::make_pair(-1, -1);	//错误声明
+			return std::make_pair(-1, -1);	//错误声明
 	}
 
 	
+}
+
+std::string getWrongToken()
+{
+	return std::string(strToken);
 }

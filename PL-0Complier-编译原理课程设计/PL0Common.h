@@ -8,6 +8,8 @@
 #include<tuple>
 extern int row, col;		//错误信息的行列
 extern bool isFinish;
+extern bool isError;
+extern bool ErrorEnd;
 typedef std::pair<int, int> Token;
 //保留字及运算符定义
 #define $BEGIN 1
@@ -43,7 +45,7 @@ typedef std::pair<int, int> Token;
 #define $ID 31
 #define $INT 32
 //错误码定义
-#define $UndefinedError 0
+#define $StatementExpected 0
 #define $UndefinedSymbol 1
 #define $IllegalIdentifier 2
 #define $KeywordExpectd 3
@@ -61,4 +63,6 @@ typedef std::pair<int, int> Token;
 #define $IntegerExpected 15
 #define $ExpressionExpected 16
 #define $InvalidExpression  17
-void RaiseError(int);
+#define $CommaExpected 18
+#define $ConstExpected 19
+
