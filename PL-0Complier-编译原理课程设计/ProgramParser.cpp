@@ -34,13 +34,8 @@ void Block()		//<block> ¡ú [<condecl>][<vardecl>][<proc>]<body>
 	}
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Proc();
-	}
-	if (tokenList[curIndex].first == $BEGIN) {
-		Body();
-	}
-	else {
-		ErrorHandle($BeginExpected);
-	}
+	}	
+	Body();
 }
 
 void Condecl()		//<condecl> ¡ú const <const>{,<const>};
@@ -86,8 +81,14 @@ void Vardecl()		//<vardecl> ¡ú var <id>{,<id>};
 	}
 	Id();
 	while (tokenList[curIndex].first == $COMMA ) {
-			Advance();
-			Id();
+		Advance();
+		Id();
+		if (tokenList[curIndex].first == $SEM)break;
+		if (tokenList[curIndex].first != $COMMA) {
+				ErrorHandle($CommaExpected);
+		}
+			
+			
 	}
 	if (tokenList[curIndex].first == $SEM) {
 		Advance();
@@ -117,9 +118,15 @@ void Proc()		//<proc> ¡ú procedure <id>£¨[<id>{,<id>}]£©;<block>{;<proc>}
 	}
 	else if(tokenList[curIndex].first == $ID){
 		Id();
-		while (tokenList[curIndex].first == $COMMA) {
-				Advance();
-				Id();
+		while (tokenList[curIndex].first == $COMMA||tokenList[curIndex].first==$ID) {
+			Advance();
+			Id();
+			if (tokenList[curIndex].first == $RPAR)break;
+			if (tokenList[curIndex].first != $COMMA) {
+				ErrorHandle($CommaExpected);
+			}
+
+
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
@@ -219,7 +226,7 @@ void Statement()		/*
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 			Exp();
-			while (tokenList[curIndex].first == $COMMA) {
+			while (tokenList[curIndex].first == $COMMA || tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 				Advance();
 				Exp();
 			}
@@ -242,6 +249,10 @@ void Statement()		/*
 			while (tokenList[curIndex].first == $COMMA) {
 				Advance();
 				Id();
+				if (tokenList[curIndex].first == $RPAR)break;
+				if (tokenList[curIndex].first != $COMMA) {
+					ErrorHandle($CommaExpected);
+				}
 			}
 			if (tokenList[curIndex].first == $RPAR) {
 				Advance();
@@ -263,7 +274,7 @@ void Statement()		/*
 			ErrorHandle($LparExpected);
 		}
 		Exp();
-		while (tokenList[curIndex].first == $COMMA) {
+		while (tokenList[curIndex].first == $COMMA|| tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 			Advance();
 			Exp();
 		}
@@ -433,7 +444,12 @@ void ErrorHandle(int errCode)
 	{
 	case 0: {
 		std::cout << "Error:Statement Expected " << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $END &&
+		do{
+			AdvanceWithError();
+			if (ErrorEnd) {
+				break;
+			}
+		} while (tokenList[curIndex].first != $END &&
 			tokenList[curIndex].first != $BEGIN &&
 			tokenList[curIndex].first != $SEM &&
 			tokenList[curIndex].first != $ID &&
@@ -442,12 +458,7 @@ void ErrorHandle(int errCode)
 			tokenList[curIndex].first != $CALL &&
 			tokenList[curIndex].first != $READ &&
 			tokenList[curIndex].first != $WRITE &&
-			tokenList[curIndex].first != $ELSE) {
-			AdvanceWithError();
-			if (ErrorEnd) {
-				break;
-			}
-		}
+			tokenList[curIndex].first != $ELSE);
 	}break;
 	case 1: {
 		std::cout << "Error:Undefined Symbol  " <<" '" <<getWrongToken()<<"'"<< "\trow:" << row << " col:" << col << '\n';
@@ -460,133 +471,140 @@ void ErrorHandle(int errCode)
 	}break;
 	case 3: {
 		std::cout << "Error: Keyword 'program' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $PROGRAM) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
-		}
+		} while (tokenList[curIndex].first != $PROGRAM);
 	}break;
 	case 4: {
 		std::cout << "Error: ';' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $VAR && tokenList[curIndex].first!=$PROCEDUCE&&tokenList[curIndex].first!=$BEGIN) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
-		}
+		} while (tokenList[curIndex].first != $VAR && tokenList[curIndex].first != $PROCEDUCE && tokenList[curIndex].first != $BEGIN);
 		
 	}break;
 	case 5: {
 		std::cout << "Error: 'begin' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $BEGIN) {
+		do{
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $ID && tokenList[curIndex].first != $IF && tokenList[curIndex].first != $WHILE && tokenList[curIndex].first != $CALL && tokenList[curIndex].first != $BEGIN && tokenList[curIndex].first != $READ && tokenList[curIndex].first != $WRITE);
 	}break;
 	case 6: {
 		std::cout << "Error: ':=' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $ID && tokenList[curIndex].first != $COMMA&&tokenList[curIndex].first!=$SEM) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $ID && tokenList[curIndex].first != $COMMA && tokenList[curIndex].first != $SEM);
 	}break;
 	case 7: {
 		std::cout << "Error: 'var' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $VAR&&tokenList[curIndex].first!=$PROCEDUCE) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
-		}
+		} while (tokenList[curIndex].first != $VAR && tokenList[curIndex].first != $PROCEDUCE);
 	}break;
 	case 8: {
 		std::cout << "Error: 'procedure' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $PROCEDUCE&&tokenList[curIndex].first!=$BEGIN&&tokenList[curIndex].first!=$SEM) {
+		do{
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
-		}
+		} while (tokenList[curIndex].first != $PROCEDUCE && tokenList[curIndex].first != $BEGIN && tokenList[curIndex].first != $SEM);
 	}break;
 	case 9: {
 		std::cout << "Error: '(' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $LPAR) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $LPAR);
 	}break;
 	case 10: {
 		std::cout << "Error: ')' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $RPAR) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $RPAR);
 	}break;
 	case 11: {
 		std::cout << "Error: 'end' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $END&&tokenList[curIndex].first!=$BEGIN&&tokenList[curIndex].first!=$READ) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
-			
-		}break;
+
+		} while (tokenList[curIndex].first != $END && tokenList[curIndex].first != $BEGIN && tokenList[curIndex].first != $READ);
+	} break;
 	case 12: {
 		std::cout << "Error: 'then' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $THEN &&tokenList[curIndex].first!=$ELSE&&tokenList[curIndex].first!=$SEM&&tokenList[curIndex].first!=$END) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $THEN && tokenList[curIndex].first != $ELSE && tokenList[curIndex].first != $SEM && tokenList[curIndex].first != $END && tokenList[curIndex].first!= $ID && tokenList[curIndex].first != $IF && tokenList[curIndex].first!= $WHILE && tokenList[curIndex].first!=	$CALL && tokenList[curIndex].first!=$BEGIN && tokenList[curIndex].first != $READ && tokenList[curIndex].first!=$WRITE);
 	}break;
 	case 13: {
 		std::cout << "Error: 'do' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $THEN && tokenList[curIndex].first != $ELSE && tokenList[curIndex].first != $SEM && tokenList[curIndex].first != $END) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $THEN && tokenList[curIndex].first != $ELSE && tokenList[curIndex].first != $SEM && tokenList[curIndex].first != $END && tokenList[curIndex].first != $ID && tokenList[curIndex].first != $IF && tokenList[curIndex].first != $WHILE && tokenList[curIndex].first != $CALL && tokenList[curIndex].first != $BEGIN && tokenList[curIndex].first != $READ && tokenList[curIndex].first != $WRITE);
 	}break;
 	case 14: {
 		std::cout << "Error: Identifier Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $ID) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $ID);
 	}break;
 	case 15: {
 		std::cout << "Error: Integer Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $INT) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $INT);
 	}break;
 	case 16: {
 		std::cout << "Error: Expression Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $EQ &&
+		do {
+			AdvanceWithError();
+			if (ErrorEnd) {
+				break;
+			}
+			
+		} while (tokenList[curIndex].first != $EQ &&
 			tokenList[curIndex].first != $NEQ &&
 			tokenList[curIndex].first != $LESS &&
 			tokenList[curIndex].first != $LESSEQ &&
@@ -598,27 +616,20 @@ void ErrorHandle(int errCode)
 			tokenList[curIndex].first != $ADD &&
 			tokenList[curIndex].first != $SUB &&
 			tokenList[curIndex].first != $LPAR &&
-			tokenList[curIndex].first != $COMMA) {
-			AdvanceWithError();
-			if (ErrorEnd) {
-				break;
-			}
-			
-		}break;
-	}
+			tokenList[curIndex].first != $COMMA);
+	}break;
 	case 17: {
 		std::cout << "Error:Invalid Expression" << "\trow:" << row << " col:" << col << '\n';
 	}break;
-	}
 	case 18: {
 		std::cout << "Error:',' Expected" << "\trow:" << row << " col:" << col << '\n';
-		while (tokenList[curIndex].first != $COMMA && tokenList[curIndex].first != $ID && tokenList[curIndex].first != $ADD && tokenList[curIndex].first != $SUB && tokenList[curIndex].first != $INT && tokenList[curIndex].first != $LPAR) {
+		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
 				break;
 			}
 			
-		}
+		} while (tokenList[curIndex].first != $COMMA && tokenList[curIndex].first != $ID && tokenList[curIndex].first != $ADD && tokenList[curIndex].first != $SUB && tokenList[curIndex].first != $INT && tokenList[curIndex].first != $LPAR && tokenList[curIndex].first != $SEM);
 	}break;
 	case 19: {
 		std::cout << "Error:'Const' Expected" << "\trow:" << row << " col:" << col << '\n';

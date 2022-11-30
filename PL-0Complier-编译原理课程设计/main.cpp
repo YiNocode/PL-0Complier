@@ -1,5 +1,5 @@
 #include"LexicalAnalyzer.h"
-#include"PL-0Complier-编译原理课程设计/ProgramParser.h"
+#include"ProgramParser.h"
 int main()
 {
 	row = 1;

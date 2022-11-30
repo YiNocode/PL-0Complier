@@ -1,5 +1,5 @@
 #pragma once
-#include"PL-0Complier-编译原理课程设计/PL0Common.h"
+#include"PL0Common.h"
 extern std::string inputBuffer;	//输入缓冲区
 extern std::string strToken;	//存放构成单词符号的字符串
 extern int beginIndex;			//起点指示器

@@ -139,18 +139,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\LexicalAnalyzer.h" />
-    <ClInclude Include="PL0Common.h" />
-    <ClInclude Include="ProgramParser.h" />
+    <Text Include="..\test.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\LexicalAnalyzer.cpp" />
-    <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="LexicalAnalyzer.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="PL0Common.cpp" />
     <ClCompile Include="ProgramParser.cpp" />
+    <ClCompile Include="Table.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\test.txt" />
+    <ClInclude Include="LexicalAnalyzer.h" />
+    <ClInclude Include="PL0Common.h" />
+    <ClInclude Include="ProgramParser.h" />
+    <ClInclude Include="Table.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
