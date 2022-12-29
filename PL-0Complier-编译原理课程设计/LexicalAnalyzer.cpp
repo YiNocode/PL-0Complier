@@ -6,6 +6,7 @@ int seekIndex;			//搜索指示器
 char ch;					//字符变量，存放最新读进的源程序字符
 bool sucFlag = true;				//标记词法分析是否成功
 int row, col;		//错误信息的行列
+int name_token_id = 0;
 std::string reserveTable[16] = { "begin","call",
 					"const","do","end","if",
 					"odd","procedure",
@@ -58,12 +59,14 @@ void Retract(){				//将搜索指示器回调一个字符位置，将ch置为空白字符
 	ch = ' ';
 }
 int InsertId(std::string strT){				//将strToken中的标识符插入符号表，返回符号表指针
-
-	return 0;
+	name_token[name_token_id] = strT;
+	name_token_id++;
+	return name_token_id - 1;
 }
 int InsertConst(std::string strT){			//将strToken中的常数插入常数表，返回常数表指针
-
-	return 0;
+	name_token[name_token_id] = strT;
+	name_token_id++;
+	return name_token_id - 1;
 }
 
 //todo:符号表和常数表

@@ -10,6 +10,8 @@ extern int row, col;		//错误信息的行列
 extern bool isFinish;
 extern bool isError;
 extern bool ErrorEnd;
+extern int name_token_id;
+extern std::string name_token[100];
 typedef std::pair<int, int> Token;
 //保留字及运算符定义
 #define $BEGIN 1

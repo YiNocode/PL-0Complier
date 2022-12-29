@@ -5,6 +5,10 @@ int tokenListLenth;
 Token LexicalAnalzer();
 std::string getWrongToken();
 std::vector<std::string> errBox;
+const char* getStr()
+{
+	return name_token[tokenList[curIndex - 1].second].c_str();
+}
 void Prog()			//<prog> → program <id>；<block>	
 {
 	if (tokenList[curIndex].first == $PROGRAM) {
@@ -14,12 +18,14 @@ void Prog()			//<prog> → program <id>；<block>
 		ErrorHandle($KeywordExpectd);
 	}
 	Id();
+	makeTable(NULL, getStr());
 	if (tokenList[curIndex].first == $SEM) {
 		Advance();
 	}
 	else {
 		ErrorHandle($SEMexpected);
 	}
+	
 	Block();
 
 }
@@ -62,6 +68,7 @@ void Condecl()		//<condecl> → const <const>{,<const>};
 void Const()		//<const> → <id>:=<integer>
 {
 	Id();
+	enter(table[tblptr - 1], getStr(), 4, varTypes::CONST);
 	if (tokenList[curIndex].first == $ASSIGN) {
 		Advance();
 	}
@@ -69,6 +76,7 @@ void Const()		//<const> → <id>:=<integer>
 		ErrorHandle($AssignExpected);
 	}
 	Integer();
+	
 }
 
 void Vardecl()		//<vardecl> → var <id>{,<id>};
@@ -80,9 +88,11 @@ void Vardecl()		//<vardecl> → var <id>{,<id>};
 		ErrorHandle($VarExpected);
 	}
 	Id();
+	enter(table[tblptr - 1], getStr(), 4, varTypes::VAR);
 	while (tokenList[curIndex].first == $COMMA ) {
 		Advance();
 		Id();
+		enter(table[tblptr - 1], getStr(), 4, varTypes::VAR);
 		if (tokenList[curIndex].first == $SEM)break;
 		if (tokenList[curIndex].first != $COMMA) {
 				ErrorHandle($CommaExpected);
@@ -107,6 +117,7 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 		ErrorHandle($ProcedureExpected);
 	}
 	Id();
+	enterProc(table[tblptr-1],getStr(), makeTable(table[tblptr - 1], getStr()));
 	if (tokenList[curIndex].first == $LPAR) {
 		Advance();
 	}
@@ -144,6 +155,7 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 	Block();
 	while (tokenList[curIndex].first == $SEM) {
 		Advance();
+		tblptr--;
 		Proc();
 	}
 }
@@ -382,7 +394,10 @@ void Mop()
 void Id()
 {
 	if (tokenList[curIndex].first == $ID)
+	{
 		Advance();
+
+	}
 	else {
 		ErrorHandle($IdentifierExpected);
 	}
@@ -669,11 +684,12 @@ void AdvanceWithError()
 	}
 }
 void ProgramParser() {
+	std::ofstream out("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\p.txt");
 	curIndex = -1;
 	Advance();
 	Prog();
 	if (!isFinish) {
 		std::cout << "遇到无法跳过的错误！" << '\n';
 	}
-	
+	out.close();
 }

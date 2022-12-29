@@ -1,9 +1,11 @@
 #pragma once
 #include"PL0Common.h"
+#include"Table.h"
 extern std::vector<Token> tokenList;
 extern int curIndex;
 extern int tokenListLenth; 
 extern std::vector<std::string> errBox;
+const char* getStr();
 void Prog();		//<prog> ¡ú program <id>£»<block>	
 void Block();		//<block> ¡ú [<condecl>][<vardecl>][<proc>]<body>
 void Condecl();		//<condecl> ¡ú const <const>{,<const>};

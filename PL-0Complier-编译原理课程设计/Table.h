@@ -1,40 +1,45 @@
 #pragma once
-#define tableMax 20
-enum types{VAR,PROC};
+#define lengthMax 20
+enum class types{VAR,PROC};
+enum class varTypes{CONST,VAR};
 extern int tblptr;
+extern int tmpId;
+struct varInfomation;
+struct Table;
+struct TableItem;
+extern Table* table[lengthMax];
+
+struct varInformation {
+	varTypes type;
+};
+
+
+struct tableItem
+{
+	char name[lengthMax];
+	types type;
+	int offset;
+	varInformation* varInfo;
+	Table* tablePtr;
+	tableItem* next;
+};
+
 struct Table
 {
-	char name[tableMax];
+	char name[lengthMax];
 	Table* header;
 	int offset;
 	tableItem* firstItem;
 	tableItem* available;
 };
 
-struct tableItem
-{
-	char name[tableMax];
-	types type;
-	int offset;
-	varInformation* varInfo;
-	tableInformation* tableInfo;
-	tableItem* next;
-};
-struct varInformation {
-
-};
-struct tableInformation {
-
-};
-
-
-Table* makeTable(Table* ,char[tableMax]); //创建一张新符号表，并且返回指向该表的指针
-void enter(Table*,char[tableMax], int,varInformation*);//在指定符号表中创建一个新项，并填入信息
-void enterProc(Table*, char[tableMax],tableInformation*);//在符号表中为嵌套符号表建立新项
+Table* makeTable(Table* ,const char[lengthMax]); //创建一张新符号表，并且返回指向该表的指针
+void enter(Table*,const char[lengthMax], int,varTypes);//在指定符号表中创建一个新项，并填入信息
+void enterProc(Table*, const char[lengthMax],Table*);//在符号表中为嵌套符号表建立新项
 
 
 void errorHandle();
-
+const char* newtemp();
 
 
 

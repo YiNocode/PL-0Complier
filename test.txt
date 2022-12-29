@@ -1,18 +1,18 @@
-program 
-const m:=7 n:=85;
-var x,y,z,p,r;
-procedure multiply (x,y,z);
+program a;
+const m:=7, n:=85;
+var x,y,z,q,r;
+procedure multiply(x,y,z);
     var a,b;
-    begin 
+    begin
         a:=x; b:=y; z:=0;
-        while b 0 do
+        while b>0 do
         begin
-            if odd b  z:=z+a;
+            if odd b then z:=z+a;
             a:=2*a; b:=b/2
         end
     end;
 
-procedure divide(x ,y,q ,r);
+procedure divide(x,y,q,r);
     var w;
     begin
         r:=x; q:=0; w:=y;
@@ -45,9 +45,7 @@ begin
         begin
             x:=m; y:=n; call multiply(x,y,z);
             x:=25; y:=3; call divide(x,y,q,r);
-            x:=34; y:=36; call gcd(x,y);
-            read(123,abc)
-
+            x:=34; y:=36; call gcd(x,y)
         end
     else
         begin
@@ -55,4 +53,4 @@ begin
                 num := 1
             end
         end
-end.
+end
