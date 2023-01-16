@@ -47,10 +47,4 @@ begin
             x:=25; y:=3; call divide(x,y,q,r);
             x:=34; y:=36; call gcd(x,y)
         end
-    else
-        begin
-            begin
-                num := 1
-            end
-        end
 end

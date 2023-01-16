@@ -15,10 +15,6 @@ int main()
 	std::cout << inputBuffer << '\n';
 	inputBuffer += stop;
 	source.close();
-	//intermediate.close();
 	ProgramParser();
-	for (int i = 0; i < 100; i++) {
-		std::cout << i << ":" << name_token[i] << std::endl;
-	}
 	return 0;
 }

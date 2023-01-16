@@ -6,13 +6,35 @@
 #include<iostream>
 #include<vector>
 #include<tuple>
+#include<stdlib.h>
+#include<map>
+
 extern int row, col;		//错误信息的行列
 extern bool isFinish;
 extern bool isError;
 extern bool ErrorEnd;
 extern int name_token_id;
+extern int constTable[100];
+extern int constId;
 extern std::string name_token[100];
 typedef std::pair<int, int> Token;
+extern int threeId;
+extern int nextquad;
+extern std::map<int*, const char*>add2name;
+
+extern int* stack;
+struct threeCodeItem
+{
+	char op[10];
+	int* arg1;
+	int* arg2;
+	int* result;
+};
+typedef struct list{
+	int id;
+	list* next;
+}list;
+extern threeCodeItem* threeCode[500];
 //保留字及运算符定义
 #define $BEGIN 1
 #define	$CALL 2
@@ -67,4 +89,11 @@ typedef std::pair<int, int> Token;
 #define $InvalidExpression  17
 #define $CommaExpected 18
 #define $ConstExpected 19
-
+#define STACK_LENGTH 400
+void Emit(std::fstream&, const char[10] = "" , int* = NULL, int* = NULL, int* = NULL);//生成三元式
+void Emit(std::fstream& , const char[10] , int* , int* , int );
+int* addrAssign(int*,int);
+list* makelist(int);
+list* merge(list*, list*);
+void backpatch(list*, int);
+void printThreeCode();

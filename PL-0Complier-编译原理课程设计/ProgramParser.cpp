@@ -1,13 +1,26 @@
 #include"ProgramParser.h"
+#include <cassert>
 std::vector<Token> tokenList;
 int curIndex;
 int tokenListLenth;
 Token LexicalAnalzer();
 std::string getWrongToken();
 std::vector<std::string> errBox;
+char Op[6];
+int* Arg1;
+int* Arg2;
+int* Result;
+std::fstream outFile("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\p.txt",std::ios::app);
+list* plist = makelist(0);
 const char* getStr()
 {
 	return name_token[tokenList[curIndex - 1].second].c_str();
+}
+int* getIntPtr() {
+	char* n = new char[6];
+	_itoa_s(constTable[tokenList[curIndex - 1].second], n, 6, 10);
+	add2name.insert(std::pair<int*, char*>(&constTable[tokenList[curIndex - 1].second], n));
+	return &(constTable[tokenList[curIndex - 1].second]);
 }
 void Prog()			//<prog> → program <id>；<block>	
 {
@@ -41,6 +54,7 @@ void Block()		//<block> → [<condecl>][<vardecl>][<proc>]<body>
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Proc();
 	}	
+	
 	Body();
 }
 
@@ -67,8 +81,13 @@ void Condecl()		//<condecl> → const <const>{,<const>};
 
 void Const()		//<const> → <id>:=<integer>
 {
+
 	Id();
 	enter(table[tblptr - 1], getStr(), 4, varTypes::CONST);
+	tableItem* tmp = lookup(getStr());
+	if (tmp == NULL) {
+		errorHandle();
+	}
 	if (tokenList[curIndex].first == $ASSIGN) {
 		Advance();
 	}
@@ -76,7 +95,8 @@ void Const()		//<const> → <id>:=<integer>
 		ErrorHandle($AssignExpected);
 	}
 	Integer();
-	
+	//std::cout << "常数值：" << *(getIntPtr()) << std::endl;
+	Emit(outFile,":=",getIntPtr(),NULL,tmp->varInfo->offset);
 }
 
 void Vardecl()		//<vardecl> → var <id>{,<id>};
@@ -112,12 +132,15 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 {
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Advance();
+		Level++;
+		plist = merge(plist, makelist(nextquad));
+		Emit(outFile, "j", NULL, NULL, NULL);
 	}
 	else {
 		ErrorHandle($ProcedureExpected);
 	}
 	Id();
-	enterProc(table[tblptr-1],getStr(), makeTable(table[tblptr - 1], getStr()));
+	enterProc(table[tblptr-2],getStr(), makeTable(table[tblptr - 1], getStr()),nextquad);
 	if (tokenList[curIndex].first == $LPAR) {
 		Advance();
 	}
@@ -153,11 +176,15 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 		ErrorHandle($SEMexpected);
 	}
 	Block();
+	Level--;
 	while (tokenList[curIndex].first == $SEM) {
 		Advance();
 		tblptr--;
+		offset[tblptr] = 0;
 		Proc();
 	}
+	backpatch(plist, nextquad);
+
 }
 
 void Body()		//<body> → begin <statement>{;<statement>}end
@@ -191,37 +218,60 @@ void Statement()		/*
 						| write(<exp>{, <exp>})
 						*/
 {
+	int M, M1, M2, N = 0;
+	list* nextlist = makelist(0);
 	if (tokenList[curIndex].first == $ID) {
 		Id();
+		tableItem* tmp = lookup(getStr());
+		if (!tmp)
+			errorHandle();
 		if (tokenList[curIndex].first == $ASSIGN) {
 			Advance();
 		}
 		else {
 			ErrorHandle($AssignExpected);
-		}
-		Exp();
+		}		
+		Emit(outFile, ":=", Exp(), NULL, tmp->varInfo->offset);
+
 	}
 	else if (tokenList[curIndex].first == $IF) {
 		Advance();
-		Lexp();
+		list* falselist;
+		list* truelist;
+		Lexp(&truelist,&falselist);
 		if (tokenList[curIndex].first == $THEN) {
 			Advance();
+			M1 = nextquad;
 		}
 		else {
 			ErrorHandle($ThenExpected);
 		}
 		Statement();
+		N = nextquad;
 		if (tokenList[curIndex].first == $ELSE) {
 			Advance();
+			M2 = nextquad;
 			Statement();
+			backpatch(falselist, M2);
 		}
+		backpatch(truelist, M1);
+		M = nextquad;
+		nextlist = merge(falselist, nextlist);
+		backpatch(nextlist, M);
 	}
 	else if (tokenList[curIndex].first == $WHILE) {
 		Advance();
-		Lexp();
+		list* falselist;
+		list* truelist;
+		M1 = nextquad;
+		Lexp(&truelist,&falselist);
 		if (tokenList[curIndex].first == $DO) {
 			Advance();
+			M2 = nextquad;
 			Statement();
+			backpatch(truelist, M2);
+			Emit(outFile, "j", NULL, NULL, M1);
+			backpatch(falselist, nextquad);
 		}
 		else {
 			ErrorHandle($DoExpected);
@@ -230,6 +280,8 @@ void Statement()		/*
 	else if (tokenList[curIndex].first == $CALL) {
 		Advance();
 		Id();
+		int codeId = 0;
+		codeId = lookup(getStr())->tablePtr->id;
 		if (tokenList[curIndex].first == $LPAR) {
 			Advance();
 		}
@@ -237,13 +289,21 @@ void Statement()		/*
 			Advance();
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
-			Exp();
+			int* queue[lengthMax];
+			int head = 0;
+			int tail = 0;
+			queue[tail] = Exp();
+			Emit(outFile, "par", queue[tail], NULL, NULL);
+			tail++;
 			while (tokenList[curIndex].first == $COMMA || tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 				Advance();
-				Exp();
+				queue[tail] = Exp();
+				Emit(outFile, "par", queue[tail], NULL, NULL);
+				tail++;
 			}
 			if (tokenList[curIndex].first == $RPAR) {
 				Advance();
+				Emit(outFile, "call", NULL, NULL, codeId);
 			}
 			else {
 				ErrorHandle($RparExpected);
@@ -302,50 +362,105 @@ void Statement()		/*
 }
 }
 
-void Lexp()		//<lexp> → <exp> <lop> <exp>|odd <exp>
+void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 {
+	int* id1;
+	int* id2;
+	char relop[6];
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
-		Exp();
-		Lop();
-		Exp();
+		id1 = Exp();
+		strcpy_s(relop,6,Lop());
+		id2 = Exp();
+		*t = makelist(nextquad);
+		*f = makelist(nextquad + 1);
+		Emit(outFile, relop, id1, id2, NULL);
+		Emit(outFile, "j", NULL, NULL, NULL);
+		
 	}
 	else if (tokenList[curIndex].first == $ODD) {
 		Advance();
-		Exp();
+		id1 = Exp();
+		*t = makelist(nextquad);
+		*f = makelist(nextquad + 1);
+		Emit(outFile, "odd", id1, NULL, NULL);
+		Emit(outFile, "j", NULL, NULL, NULL);
+		
 	}
 	else {
 		ErrorHandle($InvalidExpression);
 	}
 }
 
-void Exp()			//<exp> → [+|-]<term>{<aop><term>}
+int* Exp()			//<exp> → [+|-]<term>{<aop><term>}
 {	
+	char op[6];
+	int* term1;
+	int* term2;
+	int* exp = NULL;
+	int* exp1;
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB) {
+		if (tokenList[curIndex].first == $SUB) {
+			strcpy_s(op,"-\0");
+		}
 		Advance();
 	}
-	Term();
+	term1 = Term();
+	exp1 = term1;
+	exp = exp1;
 	while(tokenList[curIndex].first == $ADD||tokenList[curIndex].first==$SUB){
+		if (tokenList[curIndex].first == $SUB) {
+			strcpy_s(op, "-\0");
+		}
+		else
+			strcpy_s(op, "+\0");
+		exp = newtemp();
 		Aop();
-		Term();
+		term2 = Term();
+		Emit(outFile, op, exp1, term2, exp);
+		exp1 = exp;
 	}
+	if (strcmp(op, "-") == 0) {
+		exp = newtemp();
+		Emit(outFile, op, exp1, NULL, exp);
+		return exp;
+	}
+	return exp;
 }
 
-void Term()			//<term> → <factor>{<mop><factor>}
+int* Term()			//<term> → <factor>{<mop><factor>}
 {
-	Factor();
+	int* factor1;
+	int* factor2;
+	char op[6];
+	int* term;
+	int* term1;
+	factor1 = Factor();
+	term = factor1;
+	term1 = factor1;
 	while (tokenList[curIndex].first == $MUL || tokenList[curIndex].first == $DIV) {
+		if(tokenList[curIndex].first == $MUL)
+			strcpy_s(op, "*\0");
+		else
+			strcpy_s(op, "/\0");
+		term = newtemp();
 		Mop();
-		Factor();
+		factor2 = Factor();
+		Emit(outFile, op, term1, factor2, term);
+		term1 = term;
 	}
+	return term;
 }
 
-void Factor()			//<factor>→<id>|<integer>|(<exp>)
+int* Factor()			//<factor>→<id>|<integer>|(<exp>)
 {
 	if (tokenList[curIndex].first == $ID) {
 		Id();
+		tableItem* tmp = lookup(getStr());
+		return stack + (tmp->varInfo->offset)/4;
 	}
 	else if (tokenList[curIndex].first == $INT) {
 		Integer();
+		return getIntPtr();
 	}
 	else if (tokenList[curIndex].first == $LPAR) {
 		Advance();
@@ -362,16 +477,35 @@ void Factor()			//<factor>→<id>|<integer>|(<exp>)
 	}
 }
 
-void Lop()
+char* Lop() //< lop > → = | <> | <|<=|>|>=
 {
+	char* relopPtr = new char[6];
 	if (tokenList[curIndex].first == $EQ || tokenList[curIndex].first == $NEQ || tokenList[curIndex].first == $LESS || tokenList[curIndex].first == $LESSEQ || tokenList[curIndex].first == $GREAT || tokenList[curIndex].first == $GREATEQ) {
+		switch (tokenList[curIndex].first)
+		{
+		case $EQ:
+			strcpy_s(relopPtr,6, "=\0"); break;
+		case $NEQ:
+			strcpy_s(relopPtr,6, "<>\0"); break;
+		case $LESS:
+			strcpy_s(relopPtr,6, "<\0"); break;
+		case $LESSEQ:
+			strcpy_s(relopPtr,6, "<=\0"); break;
+		case $GREAT:
+			strcpy_s(relopPtr,6, ">\0"); break;
+		case $GREATEQ:
+			strcpy_s(relopPtr,6, ">=\0"); break;
+		default:
+			break;
+		}
 		Advance();
 	}
 	else
 		ErrorHandle($InvalidExpression);
+	return relopPtr;
 }
 
-void Aop()
+void Aop()	//<aop> → + | -
 {
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB) {
 		Advance();
@@ -381,7 +515,7 @@ void Aop()
 	}
 }
 
-void Mop()
+void Mop()	//<mop> → *|/
 {
 	if (tokenList[curIndex].first == $MUL || tokenList[curIndex].first == $DIV) {
 		Advance();
@@ -396,7 +530,6 @@ void Id()
 	if (tokenList[curIndex].first == $ID)
 	{
 		Advance();
-
 	}
 	else {
 		ErrorHandle($IdentifierExpected);
@@ -424,7 +557,7 @@ void Advance() {
 				tokenList.push_back(temp);
 				tokenListLenth++;
 				curIndex++;
-				std::cout<<"<code,value>:\t" << "<" << tokenList[curIndex].first << "," << tokenList[curIndex].second << ">" << '\n';
+				//std::cout<<"<code,value>:\t" << "<" << tokenList[curIndex].first << "," << tokenList[curIndex].second << ">" << '\n';
 				if (temp.first == -1) {
 					std::cout << "词法分析出错！" << '\n';
 					ErrorHandle($UndefinedSymbol);
@@ -493,7 +626,7 @@ void ErrorHandle(int errCode)
 			}
 		} while (tokenList[curIndex].first != $PROGRAM);
 	}break;
-	case 4: {
+	case 6: {
 		std::cout << "Error: ';' Expected" << "\trow:" << row << " col:" << col << '\n';
 		do {
 			AdvanceWithError();
@@ -513,8 +646,8 @@ void ErrorHandle(int errCode)
 			
 		} while (tokenList[curIndex].first != $ID && tokenList[curIndex].first != $IF && tokenList[curIndex].first != $WHILE && tokenList[curIndex].first != $CALL && tokenList[curIndex].first != $BEGIN && tokenList[curIndex].first != $READ && tokenList[curIndex].first != $WRITE);
 	}break;
-	case 6: {
-		std::cout << "Error: ':=' Expected" << "\trow:" << row << " col:" << col << '\n';
+	case 4: {
+		std::cout << "Error: ':=' Ex6pected" << "\trow:" << row << " col:" << col << '\n';
 		do {
 			AdvanceWithError();
 			if (ErrorEnd) {
@@ -684,12 +817,15 @@ void AdvanceWithError()
 	}
 }
 void ProgramParser() {
-	std::ofstream out("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\p.txt");
 	curIndex = -1;
 	Advance();
+	char d[] ="-";
+	add2name.insert(std::pair<int*, char*>(NULL, d));
 	Prog();
+
 	if (!isFinish) {
 		std::cout << "遇到无法跳过的错误！" << '\n';
 	}
-	out.close();
+	outFile.close();
+	printThreeCode();
 }

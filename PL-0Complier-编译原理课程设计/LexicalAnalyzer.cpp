@@ -64,9 +64,10 @@ int InsertId(std::string strT){				//½«strTokenÖĞµÄ±êÊ¶·û²åÈë·ûºÅ±í£¬·µ»Ø·ûºÅ±íÖ
 	return name_token_id - 1;
 }
 int InsertConst(std::string strT){			//½«strTokenÖĞµÄ³£Êı²åÈë³£Êı±í£¬·µ»Ø³£Êı±íÖ¸Õë
-	name_token[name_token_id] = strT;
-	name_token_id++;
-	return name_token_id - 1;
+	constTable[constId] = atoi(strT.c_str());
+
+	constId++;
+	return constId - 1;
 }
 
 //todo:·ûºÅ±íºÍ³£Êı±í
@@ -90,7 +91,7 @@ Token LexicalAnalzer()
 		Retract();
 		code = Reserve();
 		if (code == 0) {	//²»ÊÇ±£Áô×Ö£¬²åÈë·ûºÅ±í
-			value = InsertId(strToken);
+			value = InsertId(strToken + '\0');
 			
 			return std::make_pair($ID, value);
 		}
@@ -170,7 +171,7 @@ Token LexicalAnalzer()
 			}
 			else if (ch == '=') {
 
-				return std::make_pair($GREATEQ, -1);
+				return std::make_pair($LESSEQ, -1);
 			}
 			else {
 				Retract();

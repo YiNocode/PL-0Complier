@@ -6,6 +6,7 @@ extern int curIndex;
 extern int tokenListLenth; 
 extern std::vector<std::string> errBox;
 const char* getStr();
+int* getIntPtr();
 void Prog();		//<prog> ¡ú program <id>£»<block>	
 void Block();		//<block> ¡ú [<condecl>][<vardecl>][<proc>]<body>
 void Condecl();		//<condecl> ¡ú const <const>{,<const>};
@@ -20,11 +21,11 @@ void Statement();	/*<statement> ¡ú <id> := <exp>
 						| <body>
 						| read(<id>{£¬<id>})
 						| write(<exp>{, <exp>})*/
-void Lexp();		//<lexp> ¡ú <exp> <lop> <exp>|odd <exp>
-void Exp();			//<exp> ¡ú [+|-]<term>{<aop><term>}
-void Term();		//<term> ¡ú <factor>{<mop><factor>}
-void Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
-void Lop();			//<lop> ¡ú =|<>|<|<=|>|>=
+void Lexp(list**,list**);		//<lexp> ¡ú <exp> <lop> <exp>|odd <exp>
+int* Exp();			//<exp> ¡ú [+|-]<term>{<aop><term>}
+int* Term();		//<term> ¡ú <factor>{<mop><factor>}
+int* Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
+char* Lop();			//<lop> ¡ú =|<>|<|<=|>|>=
 void Aop();			//<aop> ¡ú + | -
 void Mop();			//<mop> ¡ú *|/
 void Id();			//<id> ¡ú l{l|d}   £¨×¢£ºl±íÊ¾×ÖÄ¸£©
