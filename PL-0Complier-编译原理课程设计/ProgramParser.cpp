@@ -10,17 +10,16 @@ char Op[6];
 int* Arg1;
 int* Arg2;
 int* Result;
-std::fstream outFile("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\p.txt",std::ios::app);
+int Top;
 list* plist = makelist(0);
 const char* getStr()
 {
 	return name_token[tokenList[curIndex - 1].second].c_str();
 }
-int* getIntPtr() {
+int getInt() {
 	char* n = new char[6];
 	_itoa_s(constTable[tokenList[curIndex - 1].second], n, 6, 10);
-	add2name.insert(std::pair<int*, char*>(&constTable[tokenList[curIndex - 1].second], n));
-	return &(constTable[tokenList[curIndex - 1].second]);
+	return (constTable[tokenList[curIndex - 1].second]);
 }
 void Prog()			//<prog> → program <id>；<block>	
 {
@@ -96,7 +95,7 @@ void Const()		//<const> → <id>:=<integer>
 	}
 	Integer();
 	//std::cout << "常数值：" << *(getIntPtr()) << std::endl;
-	Emit(outFile,":=",getIntPtr(),NULL,tmp->varInfo->offset);
+	Emit(":=",getInt(),0,tmp->varInfo->offset);
 }
 
 void Vardecl()		//<vardecl> → var <id>{,<id>};
@@ -134,7 +133,7 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 		Advance();
 		Level++;
 		plist = merge(plist, makelist(nextquad));
-		Emit(outFile, "j", NULL, NULL, NULL);
+		Emit( "j", NULL, NULL, NULL);
 	}
 	else {
 		ErrorHandle($ProcedureExpected);
@@ -231,7 +230,7 @@ void Statement()		/*
 		else {
 			ErrorHandle($AssignExpected);
 		}		
-		Emit(outFile, ":=", Exp(), NULL, tmp->varInfo->offset);
+		Emit( ":=", Exp(), NULL, tmp->varInfo->offset);
 
 	}
 	else if (tokenList[curIndex].first == $IF) {
@@ -270,7 +269,7 @@ void Statement()		/*
 			M2 = nextquad;
 			Statement();
 			backpatch(truelist, M2);
-			Emit(outFile, "j", NULL, NULL, M1);
+			Emit( "j", NULL, NULL, M1);
 			backpatch(falselist, nextquad);
 		}
 		else {
@@ -281,7 +280,9 @@ void Statement()		/*
 		Advance();
 		Id();
 		int codeId = 0;
+		int sp = 0;
 		codeId = lookup(getStr())->tablePtr->id;
+		
 		if (tokenList[curIndex].first == $LPAR) {
 			Advance();
 		}
@@ -289,21 +290,21 @@ void Statement()		/*
 			Advance();
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
-			int* queue[lengthMax];
+			int queue[lengthMax];
 			int head = 0;
 			int tail = 0;
 			queue[tail] = Exp();
-			Emit(outFile, "par", queue[tail], NULL, NULL);
+			Emit( "par", queue[tail], NULL, NULL);
 			tail++;
 			while (tokenList[curIndex].first == $COMMA || tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 				Advance();
 				queue[tail] = Exp();
-				Emit(outFile, "par", queue[tail], NULL, NULL);
+				Emit( "par", queue[tail], NULL, NULL);
 				tail++;
 			}
 			if (tokenList[curIndex].first == $RPAR) {
 				Advance();
-				Emit(outFile, "call", NULL, NULL, codeId);
+				Emit( "call", NULL, NULL, codeId);
 			}
 			else {
 				ErrorHandle($RparExpected);
@@ -364,17 +365,18 @@ void Statement()		/*
 
 void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 {
-	int* id1;
-	int* id2;
-	char relop[6];
+	int id1;
+	int id2;
+	char* relop = new char[10];
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 		id1 = Exp();
-		strcpy_s(relop,6,Lop());
+		strcpy_s(relop,2,"j");
+		strcat_s(relop, 4, Lop());
 		id2 = Exp();
 		*t = makelist(nextquad);
 		*f = makelist(nextquad + 1);
-		Emit(outFile, relop, id1, id2, NULL);
-		Emit(outFile, "j", NULL, NULL, NULL);
+		Emit( relop, id1, id2, NULL);
+		Emit( "j", NULL, NULL, NULL);
 		
 	}
 	else if (tokenList[curIndex].first == $ODD) {
@@ -382,8 +384,8 @@ void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 		id1 = Exp();
 		*t = makelist(nextquad);
 		*f = makelist(nextquad + 1);
-		Emit(outFile, "odd", id1, NULL, NULL);
-		Emit(outFile, "j", NULL, NULL, NULL);
+		Emit( "odd", id1, NULL, NULL);
+		Emit( "j", NULL, NULL, NULL);
 		
 	}
 	else {
@@ -391,13 +393,13 @@ void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 	}
 }
 
-int* Exp()			//<exp> → [+|-]<term>{<aop><term>}
+int Exp()			//<exp> → [+|-]<term>{<aop><term>}
 {	
 	char op[6];
-	int* term1;
-	int* term2;
-	int* exp = NULL;
-	int* exp1;
+	int term1;
+	int term2;
+	int exp = NULL;
+	int exp1;
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB) {
 		if (tokenList[curIndex].first == $SUB) {
 			strcpy_s(op,"-\0");
@@ -416,24 +418,24 @@ int* Exp()			//<exp> → [+|-]<term>{<aop><term>}
 		exp = newtemp();
 		Aop();
 		term2 = Term();
-		Emit(outFile, op, exp1, term2, exp);
+		Emit( op, exp1, term2, exp);
 		exp1 = exp;
 	}
 	if (strcmp(op, "-") == 0) {
 		exp = newtemp();
-		Emit(outFile, op, exp1, NULL, exp);
+		Emit( op, exp1, NULL, exp);
 		return exp;
 	}
 	return exp;
 }
 
-int* Term()			//<term> → <factor>{<mop><factor>}
+int Term()			//<term> → <factor>{<mop><factor>}
 {
-	int* factor1;
-	int* factor2;
+	int factor1;
+	int factor2;
 	char op[6];
-	int* term;
-	int* term1;
+	int term;
+	int term1;
 	factor1 = Factor();
 	term = factor1;
 	term1 = factor1;
@@ -445,22 +447,22 @@ int* Term()			//<term> → <factor>{<mop><factor>}
 		term = newtemp();
 		Mop();
 		factor2 = Factor();
-		Emit(outFile, op, term1, factor2, term);
+		Emit( op, term1, factor2, term);
 		term1 = term;
 	}
 	return term;
 }
 
-int* Factor()			//<factor>→<id>|<integer>|(<exp>)
+int Factor()			//<factor>→<id>|<integer>|(<exp>)
 {
 	if (tokenList[curIndex].first == $ID) {
 		Id();
 		tableItem* tmp = lookup(getStr());
-		return stack + (tmp->varInfo->offset)/4;
+		return (tmp->varInfo->offset);
 	}
 	else if (tokenList[curIndex].first == $INT) {
 		Integer();
-		return getIntPtr();
+		return getInt();
 	}
 	else if (tokenList[curIndex].first == $LPAR) {
 		Advance();
@@ -565,11 +567,11 @@ void Advance() {
 				}
 				if (temp.first == -2) {
 					if (!isError) {
-						std::cout << "读取完成";
+						std::cout << "读取完成" << std::endl;
 						isFinish = true;
 					}
 					else {
-						std::cout << "读取完成,有不合法语句";
+						std::cout << "读取完成,有不合法语句" << std::endl;
 						isFinish = true;
 					}
 					
@@ -820,12 +822,9 @@ void ProgramParser() {
 	curIndex = -1;
 	Advance();
 	char d[] ="-";
-	add2name.insert(std::pair<int*, char*>(NULL, d));
 	Prog();
-
 	if (!isFinish) {
 		std::cout << "遇到无法跳过的错误！" << '\n';
 	}
-	outFile.close();
 	printThreeCode();
 }

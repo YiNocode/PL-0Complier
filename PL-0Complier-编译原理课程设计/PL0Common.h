@@ -20,15 +20,14 @@ extern std::string name_token[100];
 typedef std::pair<int, int> Token;
 extern int threeId;
 extern int nextquad;
-extern std::map<int*, const char*>add2name;
 
 extern int* stack;
 struct threeCodeItem
 {
 	char op[10];
-	int* arg1;
-	int* arg2;
-	int* result;
+	int arg1;
+	int arg2;
+	int result;
 };
 typedef struct list{
 	int id;
@@ -90,10 +89,9 @@ extern threeCodeItem* threeCode[500];
 #define $CommaExpected 18
 #define $ConstExpected 19
 #define STACK_LENGTH 400
-void Emit(std::fstream&, const char[10] = "" , int* = NULL, int* = NULL, int* = NULL);//生成三元式
-void Emit(std::fstream& , const char[10] , int* , int* , int );
-int* addrAssign(int*,int);
+void Emit(const char[10], int, int, int);//生成三元式
 list* makelist(int);
 list* merge(list*, list*);
 void backpatch(list*, int);
 void printThreeCode();
+void genPcode();

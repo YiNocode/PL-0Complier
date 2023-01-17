@@ -5,7 +5,6 @@ int offset[lengthMax] = {0};
 int tblptr = 0;
 int tmpId = 0;
 int Level = 0;
-std::map<int*, const char*>add2name;
 Table* makeTable(Table* previous,const char name[lengthMax])
 {
 	Table* tmpTable = new Table;
@@ -16,10 +15,19 @@ Table* makeTable(Table* previous,const char name[lengthMax])
 		tmpTable->firstItem = nullptr;
 		table[tblptr++] = tmpTable;
 		tmpTable->level = Level;
+		tmpTable->display = new int[(tmpTable->level) + 1]();
 		std::cout << "make table,name = " << name <<"level:"<<tmpTable->level<< std::endl;
 		if (previous != NULL) {
-			std::cout << "外层table:" << previous->name << std::endl;
+			for (int i = 0; i < (previous->level)+1; i++) {
+				tmpTable->display[i] = previous->display[i];
+			}
+			tmpTable->display[tmpTable->level] = previous->width;
 		}
+		std::cout << "display:";
+		for (int j = 0; j < (tmpTable->level)+1; j++) {
+			std::cout << tmpTable->display[j] << " " ;
+		}
+		std::cout << std::endl;
 		return tmpTable;
 	}
 	errorHandle();
@@ -32,16 +40,15 @@ void enter(Table* tbl, const char name[lengthMax], int width, varTypes type)
 	varInformation* varInfoPtr = new varInformation;
 	varInfoPtr->type = type;
 	varInfoPtr->offset = offset[tblptr-1];
-	std::cout << name << "的相对地址为"<< varInfoPtr->offset << std::endl;
+	std::cout << name << "的相对地址为"<< varInfoPtr->offset <<"绝对地址为" << ((tbl->display[tbl->level] + (varInfoPtr->offset))) << std::endl;
 	offset[tblptr - 1] += width;
-	add2name.insert(std::pair<int*, const char*>((stack+(varInfoPtr->offset)/4), name));
+	tbl->width += width;
 	if (tmpItem) {
 		strcpy_s(tmpItem->name, name);
 		tmpItem->type = types::VAR;
 		tmpItem->tablePtr = nullptr;
 		tmpItem->varInfo = varInfoPtr;
 		tmpItem->next = nullptr;
-	
 		if (tbl->firstItem != nullptr) {
 			tbl->available->next = tmpItem;
 		}
@@ -49,7 +56,6 @@ void enter(Table* tbl, const char name[lengthMax], int width, varTypes type)
 			tbl->firstItem = tmpItem;
 		}
 		tbl->available = tmpItem;
-		//std::cout << "enter item,name = " << name << std::endl;
 	}
 	else {
 		errorHandle();
@@ -74,7 +80,6 @@ void enterProc(Table* tbl,const char name[lengthMax],Table* tablePtr,int codeId)
 			tbl->firstItem = tmpItem;
 		}
 		tbl->available = tmpItem;
-		//std::cout << "enter proc,name = " << name << std::endl;
 	}
 	else {
 		errorHandle();
@@ -107,8 +112,8 @@ tableItem* lookup(const char name[lengthMax]) {
 	return NULL;
 
 }
-int* newtemp() {
-	int* p = stack + offset[tblptr-1]/4;
+int newtemp() {
+	int p = ((table[tblptr - 1]->display[table[tblptr - 1]->level] + (offset[tblptr-1])));
 	char* tname = new char[20];
 	char* id = new char[5];
 	_itoa_s(tmpId, id, 5,10);
@@ -116,9 +121,6 @@ int* newtemp() {
 	strcat_s(tname, 10, id);
 	tmpId++;
 	enter(table[tblptr-1], tname, 4, varTypes::VAR);
-	add2name.insert(std::pair<int*, char*>(p, tname));
-	if (p != NULL)
-		return p;
 	return NULL;
 
 }

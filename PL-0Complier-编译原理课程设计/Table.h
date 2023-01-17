@@ -36,6 +36,7 @@ struct Table
 	tableItem* available;
 	int level;
 	int id;
+	int* display;
 };
 
 Table* makeTable(Table* ,const char[lengthMax]); //´´½¨Ò»ÕÅĞÂ·ûºÅ±í£¬²¢ÇÒ·µ»ØÖ¸Ïò¸Ã±íµÄÖ¸Õë
@@ -44,7 +45,7 @@ void enterProc(Table*, const char[lengthMax],Table*,int);//ÔÚ·ûºÅ±íÖĞÎªÇ¶Ì×·ûºÅ±
 tableItem* lookup(const char[lengthMax]);//²éÕÒ·ûºÅ±íÖĞÊÇ·ñÓĞÄ³Ò»±äÁ¿
 void errorHandle(const char*);
 void errorHandle();
-int* newtemp();
+int newtemp();
 
 
 
