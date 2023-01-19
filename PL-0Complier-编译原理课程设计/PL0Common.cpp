@@ -8,7 +8,6 @@ threeCodeItem* threeCode[500];
 int constTable[100];
 int threeId = 1;
 int nextquad = 1;
-int* stack = new int[STACK_LENGTH];
 std::fstream outFile("C:\\Lyn\\Personal\\Study\\编译原理\\PL-0Complier-编译原理课程设计\\p.txt", std::ios::app);
 void Emit(const char op[10], int arg1, int arg2, int result)
 {
@@ -70,10 +69,6 @@ void printThreeCode()
 	outFile.close();
 }
 
-void genPcode()
-{
-
-}
 
 
 

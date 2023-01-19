@@ -21,7 +21,6 @@ typedef std::pair<int, int> Token;
 extern int threeId;
 extern int nextquad;
 
-extern int* stack;
 struct threeCodeItem
 {
 	char op[10];
@@ -33,6 +32,12 @@ typedef struct list{
 	int id;
 	list* next;
 }list;
+struct Pcode
+{
+	char f[5]; //操作码
+	int *l;//层差
+	int a;//数值
+};
 extern threeCodeItem* threeCode[500];
 //保留字及运算符定义
 #define $BEGIN 1

@@ -17,9 +17,7 @@ const char* getStr()
 	return name_token[tokenList[curIndex - 1].second].c_str();
 }
 int getInt() {
-	char* n = new char[6];
-	_itoa_s(constTable[tokenList[curIndex - 1].second], n, 6, 10);
-	return (constTable[tokenList[curIndex - 1].second]);
+	return tokenList[curIndex - 1].second + 300;
 }
 void Prog()			//<prog> → program <id>；<block>	
 {
@@ -93,9 +91,9 @@ void Const()		//<const> → <id>:=<integer>
 	else {
 		ErrorHandle($AssignExpected);
 	}
-	Integer();
+	int t = Integer();
 	//std::cout << "常数值：" << *(getIntPtr()) << std::endl;
-	Emit(":=",getInt(),0,tmp->varInfo->offset);
+	Emit(":=",t,0,tmp->varInfo->offset);
 }
 
 void Vardecl()		//<vardecl> → var <id>{,<id>};
@@ -127,7 +125,7 @@ void Vardecl()		//<vardecl> → var <id>{,<id>};
 	}
 }
 
-void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
+void Proc()		//<proc> → procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 {
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Advance();
@@ -176,11 +174,17 @@ void Proc()		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
 	}
 	Block();
 	Level--;
-	while (tokenList[curIndex].first == $SEM) {
-		Advance();
+	if (tokenList[curIndex].first == $SEM) {
+		while (tokenList[curIndex].first == $SEM) {
+			Advance();
+			tblptr--;
+			offset[tblptr] = 0;
+			Proc();
+		}	
+	}
+	else {
 		tblptr--;
 		offset[tblptr] = 0;
-		Proc();
 	}
 	backpatch(plist, nextquad);
 
@@ -211,7 +215,7 @@ void Statement()		/*
 						<statement> → <id> := <exp>
 						| if <lexp> then <statement>[else <statement>]
 						| while <lexp> do <statement>
-						| call <id>（[<exp>{, <exp>}]）
+						| call <id>([<exp>{, <exp>}])
 						| <body>
 						| read(<id>{，<id>})
 						| write(<exp>{, <exp>})
@@ -288,6 +292,7 @@ void Statement()		/*
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
+			Emit("call", NULL, NULL, codeId);
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 			int queue[lengthMax];
@@ -319,9 +324,11 @@ void Statement()		/*
 		if (tokenList[curIndex].first == $LPAR) {
 			Advance();
 			Id();
+			Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
 			while (tokenList[curIndex].first == $COMMA) {
 				Advance();
 				Id();
+				Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
 				if (tokenList[curIndex].first == $RPAR)break;
 				if (tokenList[curIndex].first != $COMMA) {
 					ErrorHandle($CommaExpected);
@@ -346,10 +353,10 @@ void Statement()		/*
 		else {
 			ErrorHandle($LparExpected);
 		}
-		Exp();
+		Emit("write", Exp(), 0, 0);
 		while (tokenList[curIndex].first == $COMMA|| tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 			Advance();
-			Exp();
+			Emit("write", Exp(), 0, 0);
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
@@ -461,14 +468,14 @@ int Factor()			//<factor>→<id>|<integer>|(<exp>)
 		return (tmp->varInfo->offset);
 	}
 	else if (tokenList[curIndex].first == $INT) {
-		Integer();
-		return getInt();
+		return Integer();
 	}
 	else if (tokenList[curIndex].first == $LPAR) {
 		Advance();
-		Exp();
+		int t = Exp();
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
+			return t;
 		}
 		else {
 			ErrorHandle($RparExpected);
@@ -538,10 +545,13 @@ void Id()
 	}
 }
 
-void Integer()
+int Integer()
 {
-	if (tokenList[curIndex].first == $INT)
+	if (tokenList[curIndex].first == $INT) {
 		Advance();
+		int t = getInt();
+		return t;
+	}
 	else {
 		ErrorHandle($IntegerExpected);
 	}
@@ -827,4 +837,7 @@ void ProgramParser() {
 		std::cout << "遇到无法跳过的错误！" << '\n';
 	}
 	printThreeCode();
+	genPcode();
+	printPcode();
+	
 }

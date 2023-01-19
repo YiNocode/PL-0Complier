@@ -10,11 +10,12 @@ struct tableItem;
 extern Table* table[lengthMax];
 extern int offset[lengthMax];
 extern int Level;
+extern int pid;
 struct varInformation {
 	varTypes type;
 	int offset;
+	int addr;
 };
-
 
 struct tableItem
 {
@@ -46,6 +47,9 @@ tableItem* lookup(const char[lengthMax]);//查找符号表中是否有某一变量
 void errorHandle(const char*);
 void errorHandle();
 int newtemp();
+void gen(const char*, int*, int, int*);
+void genPcode();
+void printPcode();
 
 
 

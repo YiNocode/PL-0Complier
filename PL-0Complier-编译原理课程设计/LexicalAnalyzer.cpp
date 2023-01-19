@@ -12,7 +12,7 @@ std::string reserveTable[16] = { "begin","call",
 					"odd","procedure",
 					"read","then",
 					"var","while","write" ,"program","else"};
-//保留字表（编码1-15）
+//保留字表(编码1-15)
 bool GetChar() {	//将下一输入字符读到ch中，搜索指示器向前移一字符位置
 	if (ch == '\n') {
 		col = 1;

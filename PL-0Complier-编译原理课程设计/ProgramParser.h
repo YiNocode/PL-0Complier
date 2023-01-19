@@ -13,12 +13,12 @@ void Block();		//<block> → [<condecl>][<vardecl>][<proc>]<body>
 void Condecl();		//<condecl> → const <const>{,<const>};
 void Const();		//<const> → <id>:=<integer>
 void Vardecl();		//<vardecl> → var <id>{,<id>};
-void Proc();		//<proc> → procedure <id>（[<id>{,<id>}]）;<block>{;<proc>}
+void Proc();		//<proc> → procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 void Body();		//<body> → begin <statement>{;<statement>}end
 void Statement();	/*<statement> → <id> := <exp>
 						| if <lexp> then <statement>[else <statement>]
 						| while <lexp> do <statement>
-						| call <id>（[<exp>{, <exp>}]）
+						| call <id>([<exp>{, <exp>}])
 						| <body>
 						| read(<id>{，<id>})
 						| write(<exp>{, <exp>})*/
@@ -29,8 +29,8 @@ int Factor();		//<factor>→<id>|<integer>|(<exp>)
 char* Lop();			//<lop> → =|<>|<|<=|>|>=
 void Aop();			//<aop> → + | -
 void Mop();			//<mop> → *|/
-void Id();			//<id> → l{l|d}   （注：l表示字母）
-void Integer();		//<integer> → d{d}
+void Id();			//<id> → l{l|d}   (注：l表示字母)
+int Integer();	//<integer> → d{d}
 void ProgramParser();
 void Advance();
 void ErrorHandle(int);
