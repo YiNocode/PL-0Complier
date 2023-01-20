@@ -22,8 +22,9 @@ Table* makeTable(Table* previous,const char name[lengthMax])
 		if (previous != NULL) {
 			for (int i = 0; i < (previous->level)+1; i++) {
 				tmpTable->display[i] = previous->display[i];
+				tmpTable->display[tmpTable->level] += previous->width;
 			}
-			tmpTable->display[tmpTable->level] = previous->width;
+			
 		}
 		std::cout << "display:";
 		for (int j = 0; j < (tmpTable->level)+1; j++) {
@@ -42,8 +43,8 @@ void enter(Table* tbl, const char name[lengthMax], int width, varTypes type)
 	varInformation* varInfoPtr = new varInformation;
 	varInfoPtr->type = type;
 	varInfoPtr->offset = offset[tblptr-1];
-	varInfoPtr->addr = tbl->display[tbl->level] + (varInfoPtr->offset);
-	std::cout << name << "的相对地址为"<< varInfoPtr->offset <<"绝对地址为" << ((tbl->display[tbl->level] + (varInfoPtr->offset))) << std::endl;
+	varInfoPtr->addr = (varInfoPtr->offset);
+	std::cout <<tbl->name<<"::" <<name << "的相对地址为"<< varInfoPtr->offset <<"绝对地址为" << ((tbl->display[tbl->level] + (varInfoPtr->offset))) << std::endl;
 	offset[tblptr - 1] += width;
 	tbl->width += width;
 	if (tmpItem) {
@@ -134,8 +135,8 @@ void gen(const char* f, int *l, int a, int* id) {
 	p->l = l;
 	pcode[*id] = p;
 	(*id)++;
-	
 }
+
 
 
 void genPcode()
@@ -240,10 +241,21 @@ void genPcode()
 			gen("LOD", 0, threeCode[i]->arg1,&pid);
 		}
 		else if (strcmp(threeCode[i]->op, "call") == 0) {
-			gen("CAL", t2p[threeCode[i]->result], threeCode[i]->result,&pid);
+			gen("INT", 0, threeCode[i]->arg1 + 3*4, &pid);//设置栈顶指针T，开辟空间（栈顶分配SL,DL,RA）
+			gen("CSL", 0, threeCode[i]->arg2, &pid);
+			gen("CDL", 0, 0,&pid);
+			gen("CRA", 0, pid + 2, &pid);
+			dif += 4;
+			gen("CAL", t2p[threeCode[i]->result], threeCode[i]->result,&pid);//设置基地址指针B,转到被调用过程
+			gen("OPR", 0, 0, &pid);//恢复调用过程：释放数据段（退栈），恢复调用该过程前正在运行的过程的数据段基址寄存器B和栈顶寄存器T的值
+			dif += 1;
 		}
 		else if (strcmp(threeCode[i]->op, "par") == 0) {
-
+		while (strcmp(threeCode[i]->op, "par") == 0) {
+			gen("PAR", 0, threeCode[i]->result, &pid);
+			i++;
+			}
+		i -= 1;
 		}
 		else {
 			std::cout << "err" << std::endl;

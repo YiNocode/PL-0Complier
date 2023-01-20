@@ -43,7 +43,7 @@ procedure gcd(x,y);
 begin
     if 2<>1 then
         begin
-            x:=m; y:=n; call multiply(x,y,z);
+            x:=m; y:=n; call multiply(2,y,z);
             x:=25; y:=3; call divide(x,y,q,r);
             x:=34; y:=36; call gcd(x,y)
         end

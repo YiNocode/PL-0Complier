@@ -149,15 +149,15 @@ void Proc()		//<proc> ¡ú procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 	}
 	else if(tokenList[curIndex].first == $ID){
 		Id();
+		enter(table[tblptr - 1], getStr(), 4, varTypes::VAR);
 		while (tokenList[curIndex].first == $COMMA||tokenList[curIndex].first==$ID) {
 			Advance();
 			Id();
+			enter(table[tblptr - 1], getStr(), 4, varTypes::VAR);
 			if (tokenList[curIndex].first == $RPAR)break;
 			if (tokenList[curIndex].first != $COMMA) {
 				ErrorHandle($CommaExpected);
 			}
-
-
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
@@ -283,6 +283,7 @@ void Statement()		/*
 	else if (tokenList[curIndex].first == $CALL) {
 		Advance();
 		Id();
+		tableItem* t = lookup(getStr());
 		int codeId = 0;
 		int sp = 0;
 		codeId = lookup(getStr())->tablePtr->id;
@@ -292,19 +293,19 @@ void Statement()		/*
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
-			Emit("call", NULL, NULL, codeId);
+			Emit("call", t->tablePtr->width,t->tablePtr->display[t->tablePtr->level], codeId);
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
-			int queue[lengthMax];
+			int queue[lengthMax] = {0};
 			int head = 0;
 			int tail = 0;
 			queue[tail] = Exp();
-			Emit( "par", queue[tail], NULL, NULL);
+			Emit( "par",NULL, NULL, queue[tail]);
 			tail++;
 			while (tokenList[curIndex].first == $COMMA || tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 				Advance();
 				queue[tail] = Exp();
-				Emit( "par", queue[tail], NULL, NULL);
+				Emit( "par", NULL, NULL, queue[tail]);
 				tail++;
 			}
 			if (tokenList[curIndex].first == $RPAR) {
