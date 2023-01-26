@@ -173,6 +173,7 @@ void Proc()		//<proc> ¡ú procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 		ErrorHandle($SEMexpected);
 	}
 	Block();
+	Emit("ret", 0, 0, 0);
 	Level--;
 	if (tokenList[curIndex].first == $SEM) {
 		while (tokenList[curIndex].first == $SEM) {
@@ -310,7 +311,7 @@ void Statement()		/*
 			}
 			if (tokenList[curIndex].first == $RPAR) {
 				Advance();
-				Emit( "call", NULL, NULL, codeId);
+				Emit("call", t->tablePtr->width, t->tablePtr->display[t->tablePtr->level], codeId);
 			}
 			else {
 				ErrorHandle($RparExpected);
@@ -840,5 +841,6 @@ void ProgramParser() {
 	printThreeCode();
 	genPcode();
 	printPcode();
+	runPcode();
 	
 }

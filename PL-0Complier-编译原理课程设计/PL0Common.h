@@ -94,6 +94,8 @@ extern threeCodeItem* threeCode[500];
 #define $CommaExpected 18
 #define $ConstExpected 19
 #define STACK_LENGTH 400
+
+
 void Emit(const char[10], int, int, int);//生成三元式
 list* makelist(int);
 list* merge(list*, list*);

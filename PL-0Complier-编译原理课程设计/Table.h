@@ -50,6 +50,6 @@ int newtemp();
 void gen(const char*, int*, int, int*);
 void genPcode();
 void printPcode();
-
+void runPcode();
 
 
