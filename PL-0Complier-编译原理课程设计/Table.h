@@ -1,7 +1,7 @@
 #pragma once
 #define lengthMax 20
 enum class types{VAR,PROC};
-enum class varTypes{CONST,VAR};
+enum class varTypes{CONST,VAR,PAR};
 extern int tblptr;
 extern int tmpId;
 struct varInfomation;
@@ -37,6 +37,7 @@ struct Table
 	tableItem* available;
 	int level;
 	int id;
+	int parWidth;
 	int* display;
 };
 

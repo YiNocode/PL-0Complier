@@ -1,12 +1,20 @@
-program abc;
-  const  a:=10;
-  var    b,c;
- procedure p();  begin    c:=b+a  end 
- begin  
- read(b); 
- while b<>0 do 
- begin    
- call p();  
- write(2*c); 
- read(b)   end
- end 
+program xi;
+const a:=5;
+var j,sum,x;
+     procedure sum1(x);
+     var j;
+     begin
+         j:=1;
+         sum:=0;
+         while j<=x do
+	begin
+	   sum:=sum+j;
+	   j:=j+1
+	end;
+	write(sum)
+      end
+begin
+     read(x,j);
+     call sum1(j+5);
+     write(j)	
+end

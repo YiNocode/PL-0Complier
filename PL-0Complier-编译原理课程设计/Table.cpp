@@ -13,6 +13,7 @@ Table* makeTable(Table* previous,const char name[lengthMax])
 	if (tmpTable && tblptr < lengthMax - 1) {
 		tmpTable->header = previous;
 		tmpTable->width = 0;
+		tmpTable->parWidth = 0;
 		strcpy_s(tmpTable->name, name);
 		tmpTable->firstItem = nullptr;
 		table[tblptr++] = tmpTable;
@@ -42,11 +43,12 @@ void enter(Table* tbl, const char name[lengthMax], int width, varTypes type)
 	tableItem* tmpItem = new tableItem;
 	varInformation* varInfoPtr = new varInformation;
 	varInfoPtr->type = type;
+	tbl->width += width;
 	varInfoPtr->offset = offset[tblptr-1];
 	varInfoPtr->addr = (varInfoPtr->offset);
 	std::cout <<tbl->name<<"::" <<name << "的相对地址为"<< varInfoPtr->offset <<"绝对地址为" << ((tbl->display[tbl->level] + (varInfoPtr->offset))) << std::endl;
 	offset[tblptr - 1] += width;
-	tbl->width += width;
+	
 	if (tmpItem) {
 		strcpy_s(tmpItem->name, name);
 		tmpItem->type = types::VAR;
@@ -123,7 +125,7 @@ int newtemp() {
 	strcpy_s(tname,2 ,"t");
 	strcat_s(tname, 10, id);
 	tmpId++;
-	int p = ((table[tblptr - 1]->display[table[tblptr - 1]->level] + (offset[tblptr - 1])));
+	int p =  (offset[tblptr - 1]);
 	enter(table[tblptr-1], tname, 4, varTypes::VAR);
 	return p;
 
@@ -266,6 +268,8 @@ void genPcode()
 			gen("OPR", 0, 0, &pid);//恢复调用过程：释放数据段（退栈），恢复调用该过程前正在运行的过程的数据段基址寄存器B和栈顶寄存器T的值
 		}
 		else if (strcmp(threeCode[i]->op, "par") == 0) {
+		gen("SED",0,threeCode[i]->arg1,&pid);
+		dif += 1;
 		while (strcmp(threeCode[i]->op, "par") == 0) {
 			gen("PAR", 0, threeCode[i]->result, &pid);
 			i++;
@@ -291,7 +295,7 @@ void runPcode() {
 	int T = NULL;//指向数据STACK栈顶
 	int B = NULL;//当前运行过程的数据区在STACK中的起始地址
 	int P = 0;//下一条要执行的指令编号
-
+	int D = 0;
 	int* STACK = NULL;//数据栈STACK
 	while (1) {
 		if (strcmp("INT", pcode[P]->f) == 0) {
@@ -319,6 +323,7 @@ void runPcode() {
 		}
 		else if (strcmp("CAL", pcode[P]->f) == 0) {
 			P = pcode[P]->a + *(pcode[P]->l);
+			B = (STACK[T - 3])/4;
 		}
 		else if (strcmp("JMP", pcode[P]->f) == 0) {
 			if (pcode[P]->l == 0) {
@@ -334,6 +339,7 @@ void runPcode() {
 			else {
 				P++;
 			}
+			T -=1;
 		}
 		else if (strcmp("OPR", pcode[P]->f) == 0) {
 			switch (pcode[P]->a)
@@ -418,6 +424,7 @@ void runPcode() {
 			}break;
 			case  14: {
 				std::cout << STACK[T - 1];
+				T -= 1;
 				P++;
 
 			}break;
@@ -449,6 +456,22 @@ void runPcode() {
 			STACK[T - 1] = pcode[P]->a;
 			P++;
 		}
+		else if (strcmp("PAR", pcode[P]->f) == 0) {
+		if (D == T) {
+			STACK = (int*)realloc(STACK, (T + 1) * 4);
+			T++;
+			STACK[T - 1] = STACK[B + (pcode[P]->a) / 4];
+			}
+		else {
+			STACK[D] = STACK[B + (pcode[P]->a) / 4];
+			D++;
+		}
+			P++;
+		}
+		else if (strcmp("SED", pcode[P]->f) == 0) {
+		D = pcode[P]->a / 4;
+		P++;
+}
 		for (int i = 0; i < T; i++) {
 			std::cout << STACK[i] << " ";
 		}
