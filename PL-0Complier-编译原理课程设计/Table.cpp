@@ -133,7 +133,11 @@ int newtemp() {
 void gen(const char* f, int *l, int a, int* id) {
 	Pcode* p = new Pcode;
 	if (a >= 300) {
-		strcpy_s(p->f, 5, "LIT");
+		if (strcmp(f, "PAR") == 0) {
+			strcpy_s(p->f, 5, "IPA");
+		}else{
+			strcpy_s(p->f, 5, "LIT");
+		}
 		p->a = constTable[a - 300];
 	}
 	else {
@@ -246,6 +250,13 @@ void genPcode()
 			gen("STO", 0, threeCode[i]->result, &pid);
 			dif += 3;
 		}
+		else if (strcmp(threeCode[i]->op, "odd") == 0) {
+			gen("LOD", 0, threeCode[i]->arg1, &pid);
+			gen("OPR", 0, 6, &pid);
+			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
+			dif += 2;
+
+		}
 		else if (strcmp(threeCode[i]->op, "write") == 0) {
 			gen("LOD", 0, threeCode[i]->arg1, &pid);
 			dif += 1;
@@ -334,7 +345,11 @@ void runPcode() {
 		}
 		else if (strcmp("JPC", pcode[P]->f) == 0) {
 			if (STACK[T - 1]) {
-				P = pcode[P]->a + *(pcode[P]->l);
+				if (pcode[P]->l == 0) {
+					P = pcode[P]->a;
+				}
+				else
+					P = pcode[P]->a + *(pcode[P]->l);
 			}
 			else {
 				P++;
@@ -457,7 +472,7 @@ void runPcode() {
 			P++;
 		}
 		else if (strcmp("PAR", pcode[P]->f) == 0) {
-		if (D == T) {
+		if (D == 0) {
 			STACK = (int*)realloc(STACK, (T + 1) * 4);
 			T++;
 			STACK[T - 1] = STACK[B + (pcode[P]->a) / 4];
@@ -465,11 +480,28 @@ void runPcode() {
 		else {
 			STACK[D] = STACK[B + (pcode[P]->a) / 4];
 			D++;
+			if (D == T)D = 0;
 		}
 			P++;
 		}
 		else if (strcmp("SED", pcode[P]->f) == 0) {
 		D = pcode[P]->a / 4;
+		if (D == T) {
+			D = 0;
+		}
+		P++;
+		}
+		else if (strcmp("IPA", pcode[P]->f) == 0) {
+		if (D == 0) {
+			STACK = (int*)realloc(STACK, (T + 1) * 4);
+			T++;
+			STACK[T - 1] = pcode[P]->a;
+		}
+		else {
+			STACK[D] = pcode[P]->a;
+			D++;
+			if (D == T)D = 0;
+		}
 		P++;
 }
 		for (int i = 0; i < T; i++) {
