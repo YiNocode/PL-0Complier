@@ -5,8 +5,6 @@ int offset[lengthMax] = {0};
 int tblptr = 0;
 int tmpId = 0;
 int Level = 0;
-Pcode* pcode[500];
-int pid = 0;
 Table* makeTable(Table* previous,const char name[lengthMax])
 {
 	Table* tmpTable = new Table;
@@ -23,9 +21,9 @@ Table* makeTable(Table* previous,const char name[lengthMax])
 		if (previous != NULL) {
 			for (int i = 0; i < (previous->level)+1; i++) {
 				tmpTable->display[i] = previous->display[i];
-				tmpTable->display[tmpTable->level] += previous->width;
 			}
-			
+			tmpTable->display[tmpTable->level] = tmpTable->display[(tmpTable->level) - 1] + previous->width;
+
 		}
 		std::cout << "display:";
 		for (int j = 0; j < (tmpTable->level)+1; j++) {
@@ -102,6 +100,9 @@ tableItem* lookup(const char name[lengthMax]) {
 		{
 			
 				if (strcmp(name, seek->name) == 0) {
+					if(seek->type==types::VAR){
+						seek->tablePtr = curTable;
+					}
 					return seek;
 				}
 			
@@ -118,7 +119,7 @@ tableItem* lookup(const char name[lengthMax]) {
 	return NULL;
 
 }
-int newtemp() {
+std::pair<int,int> newtemp() {
 	char* tname = new char[20];
 	char* id = new char[5];
 	_itoa_s(tmpId, id, 5,10);
@@ -127,393 +128,10 @@ int newtemp() {
 	tmpId++;
 	int p =  (offset[tblptr - 1]);
 	enter(table[tblptr-1], tname, 4, varTypes::VAR);
-	return p;
+	return std::pair<int,int>(p, table[tblptr-1]->level);
 
 }
-void gen(const char* f, int *l, int a, int* id) {
-	Pcode* p = new Pcode;
-	if (a >= 300) {
-		if (strcmp(f, "PAR") == 0) {
-			strcpy_s(p->f, 5, "IPA");
-		}else{
-			strcpy_s(p->f, 5, "LIT");
-		}
-		p->a = constTable[a - 300];
-	}
-	else {
-		strcpy_s(p->f, 5, f);
-		p->a = a;
-	}
-	p->l = l;
-	pcode[*id] = p;
-	(*id)++;
-}
 
-
-
-void genPcode()
-{
-	
-	int dif = 0;
-	int* t2p[400] = {NULL};
-	for (int i = 1; i <= threeId; i++) {
-		t2p[i] = new int;
-	}
-	gen("INT", 0, table[0]->width, &pid);
-	for (int i = 1; i <= threeId; i++)
-	{
-		*t2p[i] = dif;
-		if (i == threeId)break;
-		if (strcmp(threeCode[i]->op, ":=") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			
-			gen("STO", 0, threeCode[i]->result, &pid);
-			dif += 1;
-		}
-		else if (strcmp(threeCode[i]->op, "j") == 0) {
-			gen("JMP", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j<") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 10, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j<=") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 13, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j<>") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 9, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j=") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 8, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j>") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 12, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "j>=") == 0) {
-			
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 11, &pid);
-			dif += 3;
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "+") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 2, &pid);
-			gen("STO", 0, threeCode[i]->result, &pid);
-			dif += 3;
-		}
-		else if (strcmp(threeCode[i]->op, "-") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 3, &pid);
-			gen("STO", 0, threeCode[i]->result, &pid);
-			dif += 3;
-		}
-		else if (strcmp(threeCode[i]->op, "*") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 4, &pid);
-			gen("STO", 0, threeCode[i]->result, &pid);
-			dif += 3;
-		}
-		else if (strcmp(threeCode[i]->op, "/") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("LOD", 0, threeCode[i]->arg2, &pid);
-			gen("OPR", 0, 5, &pid);
-			gen("STO", 0, threeCode[i]->result, &pid);
-			dif += 3;
-		}
-		else if (strcmp(threeCode[i]->op, "odd") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			gen("OPR", 0, 6, &pid);
-			gen("JPC", t2p[threeCode[i]->result], threeCode[i]->result, &pid);
-			dif += 2;
-
-		}
-		else if (strcmp(threeCode[i]->op, "write") == 0) {
-			gen("LOD", 0, threeCode[i]->arg1, &pid);
-			dif += 1;
-			gen("OPR", 0, 14, &pid);
-		}
-		else if (strcmp(threeCode[i]->op, "read") == 0) {
-			gen("OPR", 0, 16,&pid);
-			dif += 1;
-			gen("STO", 0, threeCode[i]->arg1,&pid);
-		}
-		else if (strcmp(threeCode[i]->op, "call") == 0) {
-			gen("INT", 0, threeCode[i]->arg1 + 3*4, &pid);//设置栈顶指针T，开辟空间（栈顶分配SL,DL,RA）
-			gen("CSL", 0, threeCode[i]->arg2, &pid);
-			gen("CDL", 0, 0 ,&pid);
-			gen("CRA", 0, pid + 2, &pid);
-			dif += 4;
-			gen("CAL", t2p[threeCode[i]->result], threeCode[i]->result,&pid);//设置基地址指针B,转到被调用过程
-		}
-		else if (strcmp(threeCode[i]->op, "ret") == 0) {
-			gen("OPR", 0, 0, &pid);//恢复调用过程：释放数据段（退栈），恢复调用该过程前正在运行的过程的数据段基址寄存器B和栈顶寄存器T的值
-		}
-		else if (strcmp(threeCode[i]->op, "par") == 0) {
-		gen("SED",0,threeCode[i]->arg1,&pid);
-		dif += 1;
-		while (strcmp(threeCode[i]->op, "par") == 0) {
-			gen("PAR", 0, threeCode[i]->result, &pid);
-			i++;
-			}
-		i -= 1;
-		}
-		else {
-			std::cout << "err" << std::endl;
-		}
-	}
-
-
-}
-void printPcode() {
-	for (int i = 0; i < pid; i++) {
-		if (pcode[i]->l == 0) {
-			std::cout << i << "\t" << pcode[i]->f << "\t" << 0 << "\t" << pcode[i]->a << std::endl;
-		}else
-		std::cout << i<<"\t"<<pcode[i]->f << "\t" << *(pcode[i]->l) << "\t" << pcode[i]->a << std::endl;
-	}
-}
-void runPcode() {
-	int T = NULL;//指向数据STACK栈顶
-	int B = NULL;//当前运行过程的数据区在STACK中的起始地址
-	int P = 0;//下一条要执行的指令编号
-	int D = 0;
-	int* STACK = NULL;//数据栈STACK
-	while (1) {
-		if (strcmp("INT", pcode[P]->f) == 0) {
-			STACK = (int*)realloc(STACK,(T * 4 + pcode[P]->a));
-			//B = T;
-			T = T + (pcode[P]->a)/4;
-			P++;
-		}
-		else if (strcmp("LIT", pcode[P]->f) ==0 ){
-			STACK = (int*)realloc(STACK, (T + 1) * 4);
-			T++;
-			STACK[T - 1] = pcode[P]->a;
-			P++;
-		}
-		else if (strcmp("LOD", pcode[P]->f) == 0) {
-			STACK = (int*)realloc(STACK, (T + 1) * 4);
-			T++;
-			STACK[T - 1] = STACK[B + (pcode[P]->a)/4];
-			P++;
-		}
-		else if (strcmp("STO", pcode[P]->f) == 0) {
-			STACK[B + (pcode[P]->a) / 4] = STACK[T - 1];
-			T--;
-			P++;
-		}
-		else if (strcmp("CAL", pcode[P]->f) == 0) {
-			P = pcode[P]->a + *(pcode[P]->l);
-			B = (STACK[T - 3])/4;
-		}
-		else if (strcmp("JMP", pcode[P]->f) == 0) {
-			if (pcode[P]->l == 0) {
-				P = pcode[P]->a;
-			}
-			else
-			P = pcode[P]->a + *(pcode[P]->l);
-		}
-		else if (strcmp("JPC", pcode[P]->f) == 0) {
-			if (STACK[T - 1]) {
-				if (pcode[P]->l == 0) {
-					P = pcode[P]->a;
-				}
-				else
-					P = pcode[P]->a + *(pcode[P]->l);
-			}
-			else {
-				P++;
-			}
-			T -=1;
-		}
-		else if (strcmp("OPR", pcode[P]->f) == 0) {
-			switch (pcode[P]->a)
-			{
-			case 0:
-			{
-				P = STACK[T - 1];
-				B = STACK[T - 2];
-				T = (STACK[T - 3])/4;
-
-			}break;
-			case 1:
-			{
-				STACK[T-1] = ~STACK[T-1];
-				P++;
-
-			}break;
-			case 2:
-			{
-				STACK[T - 2] = STACK[T - 1] + STACK[T - 2];
-				T -= 1;
-				P++;
-
-			}break;
-			case 3: {
-				STACK[T - 2] = STACK[T - 2] - STACK[T - 1];
-				T -= 1;
-				P++;
-
-			}break;
-			case 4: {
-				STACK[T - 2] = STACK[T - 2] * STACK[T - 1];
-				T -= 1;
-				P++;
-
-			}break;
-			case 5: {
-				STACK[T - 2] = STACK[T - 2] / STACK[T - 1];
-				T -= 1;
-				P++;
-			}break;
-			case 6: {
-				STACK[T - 1] = STACK[T - 1] % 2;
-				P++;
-
-			}break;
-			case 7: {
-				
-			}break;
-			case 8: {
-				STACK[T - 2] = (STACK[T - 1] == STACK[T - 2]);
-				T -= 1;
-				P++;
-			}break;
-			case 9: {
-				STACK[T - 2] = (STACK[T - 1] != STACK[T - 2]);
-				T -= 1;
-				P++;
-			}break;
-			case 10: {
-				STACK[T - 2] = (STACK[T - 2] < STACK[T - 1]);
-				T -= 1;
-				P++;
-			}break;
-			case 11: {
-				STACK[T - 2] = (STACK[T - 2] >= STACK[T - 1]);
-				T -= 1;
-				P++;
-
-			}break;
-			case 12: {
-				STACK[T - 2] = (STACK[T - 2] > STACK[T - 1]);
-				T -= 1;
-				P++;
-
-			}break;
-			case 13: {
-				STACK[T - 2] = (STACK[T - 2] <= STACK[T - 1]);
-				T -= 1;
-				P++;
-
-			}break;
-			case  14: {
-				std::cout << STACK[T - 1];
-				T -= 1;
-				P++;
-
-			}break;
-			case 15: {
-				std::cout << std::endl;
-			}break;
-			case 16: {
-				STACK = (int*)realloc(STACK, (T + 1) * 4);
-				T++;
-				std::cin >> STACK[T - 1];
-				P++;
-			}break;
-			default:
-				break;
-			}
-		}
-		else if (strcmp("CSL", pcode[P]->f) == 0) {
-
-			STACK[T - 3] = pcode[P]->a;
-			P++;
-
-		}
-		else if (strcmp("CDL", pcode[P]->f) == 0) {
-			STACK[T - 2] = B;
-			P++;
-			
-		}
-		else if (strcmp("CRA", pcode[P]->f) == 0) {
-			STACK[T - 1] = pcode[P]->a;
-			P++;
-		}
-		else if (strcmp("PAR", pcode[P]->f) == 0) {
-		if (D == 0) {
-			STACK = (int*)realloc(STACK, (T + 1) * 4);
-			T++;
-			STACK[T - 1] = STACK[B + (pcode[P]->a) / 4];
-			}
-		else {
-			STACK[D] = STACK[B + (pcode[P]->a) / 4];
-			D++;
-			if (D == T)D = 0;
-		}
-			P++;
-		}
-		else if (strcmp("SED", pcode[P]->f) == 0) {
-		D = pcode[P]->a / 4;
-		if (D == T) {
-			D = 0;
-		}
-		P++;
-		}
-		else if (strcmp("IPA", pcode[P]->f) == 0) {
-		if (D == 0) {
-			STACK = (int*)realloc(STACK, (T + 1) * 4);
-			T++;
-			STACK[T - 1] = pcode[P]->a;
-		}
-		else {
-			STACK[D] = pcode[P]->a;
-			D++;
-			if (D == T)D = 0;
-		}
-		P++;
-}
-		for (int i = 0; i < T; i++) {
-			std::cout << STACK[i] << " ";
-		}
-		std::cout << std::endl;
-		std::cout << P << std::endl;
-		if (P >= pid)break;
-	}
-	delete[]STACK;
-	
-}
 
 void errorHandle(const char * name)
 {

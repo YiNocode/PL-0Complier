@@ -6,10 +6,6 @@ int tokenListLenth;
 Token LexicalAnalzer();
 std::string getWrongToken();
 std::vector<std::string> errBox;
-char Op[6];
-int* Arg1;
-int* Arg2;
-int* Result;
 int Top;
 list* plist = makelist(0);
 const char* getStr()
@@ -51,7 +47,6 @@ void Block()		//<block> → [<condecl>][<vardecl>][<proc>]<body>
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Proc();
 	}	
-	
 	Body();
 }
 
@@ -93,7 +88,9 @@ void Const()		//<const> → <id>:=<integer>
 	}
 	int t = Integer();
 	//std::cout << "常数值：" << *(getIntPtr()) << std::endl;
-	Emit(":=",t,0,tmp->varInfo->offset);
+	//Emit(":=",t,0,tmp->varInfo->offset);
+	gen("LOD", 0, t, &pid);
+	gen("STO", Level - tmp->tablePtr->level, tmp->varInfo->offset, &pid);
 }
 
 void Vardecl()		//<vardecl> → var <id>{,<id>};
@@ -130,14 +127,16 @@ void Proc()		//<proc> → procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 	if (tokenList[curIndex].first == $PROCEDUCE) {
 		Advance();
 		Level++;
-		plist = merge(plist, makelist(nextquad));
-		Emit( "j", NULL, NULL, NULL);
+		plist = merge(plist, makelist(nextquad,Level));
+		//Emit( "j", NULL, NULL, NULL);
+		gen("JMP", 0, 0, &pid);
+
 	}
 	else {
 		ErrorHandle($ProcedureExpected);
 	}
 	Id();
-	enterProc(table[tblptr-2],getStr(), makeTable(table[tblptr - 1], getStr()),nextquad);
+	enterProc(table[tblptr - 2], getStr(), makeTable(table[tblptr - 1], getStr()),nextquad);
 	if (tokenList[curIndex].first == $LPAR) {
 		Advance();
 	}
@@ -173,7 +172,9 @@ void Proc()		//<proc> → procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 		ErrorHandle($SEMexpected);
 	}
 	Block();
-	Emit("ret", 0, 0, 0);
+	//Emit("ret", 0, 0, 0);
+	gen("OPR", 0, 0, &pid);//恢复调用过程：释放数据段（退栈），恢复调用该过程前正在运行的过程的数据段基址寄存器B和栈顶寄存器T的值
+
 	Level--;
 	if (tokenList[curIndex].first == $SEM) {
 		while (tokenList[curIndex].first == $SEM) {
@@ -187,7 +188,7 @@ void Proc()		//<proc> → procedure <id>([<id>{,<id>}]);<block>{;<proc>}
 		tblptr--;
 		offset[tblptr] = 0;
 	}
-	backpatch(plist, nextquad);
+	backpatch(plist, nextquad,Level);
 
 }
 
@@ -235,8 +236,10 @@ void Statement()		/*
 		else {
 			ErrorHandle($AssignExpected);
 		}		
-		Emit( ":=", Exp(), NULL, tmp->varInfo->offset);
-
+		//Emit( ":=", Exp(), NULL, tmp->varInfo->offset);
+		std::pair<int, int> t = Exp();
+		gen("LOD", Level - t.second, t.first, &pid);
+		gen("STO", Level - tmp->tablePtr->level, tmp->varInfo->offset, &pid);
 	}
 	else if (tokenList[curIndex].first == $IF) {
 		Advance();
@@ -274,7 +277,9 @@ void Statement()		/*
 			M2 = nextquad;
 			Statement();
 			backpatch(truelist, M2);
-			Emit( "j", NULL, NULL, M1);
+			//Emit( "j", NULL, NULL, M1);
+			gen("JMP", 0, M1, &pid);
+
 			backpatch(falselist, nextquad);
 		}
 		else {
@@ -293,26 +298,39 @@ void Statement()		/*
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
-			Emit("call", t->tablePtr->width,t->tablePtr->display[t->tablePtr->level], codeId);
+			//Emit("call", t->tablePtr->width,t->tablePtr->display[t->tablePtr->level], codeId);
+			gen("INT", 0, t->tablePtr->width + 3 * 4, &pid);//设置栈顶指针T，开辟空间（栈顶分配SL,DL,RA）
+			gen("CSL", 0, t->tablePtr->width + 3 * 4, &pid);
+			gen("CDL", 0, 0, &pid);
+			gen("CRA", 0, pid+2, &pid);
+			gen("CAL", 0, codeId, &pid);//设置基地址指针B,转到被调用过程
 		}
 		else if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
-			int queue[lengthMax] = {0};
+			std::pair<int,int> queue[lengthMax];
 			int head = 0;
 			int tail = 0;
 			int n = 0;
 			queue[tail] = Exp();
-			Emit( "par", t->tablePtr->display[t->tablePtr->level], NULL, queue[tail]);
+			//Emit( "par", t->tablePtr->display[t->tablePtr->level], NULL, queue[tail]);
+			gen("SED", 0, 0, &pid);
+			gen("PAR", Level - queue[tail].second, queue[tail].first, &pid);
 			tail++;
 			n++;
 			while (tokenList[curIndex].first == $COMMA || tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 				Advance();
 				queue[tail] = Exp();
-				Emit( "par", t->tablePtr->display[t->tablePtr->level], NULL, queue[tail]);
+				//Emit( "par", t->tablePtr->display[t->tablePtr->level], NULL, queue[tail]);
+				gen("PAR", Level - queue[tail].second, queue[tail].first, &pid);
 				tail++;
 			}
 			if (tokenList[curIndex].first == $RPAR) {
 				Advance();
-				Emit("call", t->tablePtr->width, t->tablePtr->display[t->tablePtr->level], codeId);
+				//Emit("call", t->tablePtr->width, t->tablePtr->display[t->tablePtr->level], codeId);
+				gen("INT", 0, t->tablePtr->width + 3 * 4, &pid);//设置栈顶指针T，开辟空间（栈顶分配SL,DL,RA）
+				gen("CSL", 0, t->tablePtr->width + 3 * 4, &pid);
+				gen("CDL", 0, 0, &pid);
+				gen("CRA", 0, pid + 2, &pid);
+				gen("CAL", 0, codeId, &pid);//设置基地址指针B,转到被调用过程
 			}
 			else {
 				ErrorHandle($RparExpected);
@@ -327,11 +345,15 @@ void Statement()		/*
 		if (tokenList[curIndex].first == $LPAR) {
 			Advance();
 			Id();
-			Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
+			//Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
+			gen("OPR", 0, 16, &pid);
+			gen("STO", Level, lookup(getStr())->varInfo->offset, &pid);
 			while (tokenList[curIndex].first == $COMMA) {
 				Advance();
 				Id();
-				Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
+				//Emit("read", lookup(getStr())->varInfo->offset, 0, 0);
+				gen("OPR", 0, 16, &pid);
+				gen("STO", Level, lookup(getStr())->varInfo->offset, &pid);
 				if (tokenList[curIndex].first == $RPAR)break;
 				if (tokenList[curIndex].first != $COMMA) {
 					ErrorHandle($CommaExpected);
@@ -356,10 +378,16 @@ void Statement()		/*
 		else {
 			ErrorHandle($LparExpected);
 		}
-		Emit("write", Exp(), 0, 0);
+		//Emit("write", Exp(), 0, 0);
+		std::pair<int, int> t = Exp();
+		gen("LOD", Level - t.second, t.first, &pid);
+		gen("OPR", 0, 14, &pid);
 		while (tokenList[curIndex].first == $COMMA|| tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 			Advance();
-			Emit("write", Exp(), 0, 0);
+			//Emit("write", Exp(), 0, 0);
+			t = Exp();
+			gen("LOD", Level - t.second, t.first, &pid);
+			gen("OPR", 0, 14, &pid);
 		}
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
@@ -375,27 +403,42 @@ void Statement()		/*
 
 void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 {
-	int id1;
-	int id2;
+	std::pair<int,int> id1;
+	std::pair<int, int> id2;
 	char* relop = new char[10];
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB || tokenList[curIndex].first == $ID || tokenList[curIndex].first == $INT || tokenList[curIndex].first == $LPAR) {
 		id1 = Exp();
-		strcpy_s(relop,2,"j");
-		strcat_s(relop, 4, Lop());
+		strcpy_s(relop, 4, Lop());
 		id2 = Exp();
-		*t = makelist(nextquad);
-		*f = makelist(nextquad + 1);
-		Emit( relop, id1, id2, NULL);
-		Emit( "j", NULL, NULL, NULL);
+		*t = makelist(nextquad + 3);
+		*f = makelist(nextquad + 4);
+		//Emit( relop, id1, id2, NULL);
+		gen("LOD", Level - id1.second, id1.first, &pid);
+		gen("LOD", Level - id2.second, id2.first, &pid);
+		if (strcmp(relop, ">") == 0) { gen("OPR", 0, 12, &pid); }
+		else if (strcmp(relop, "<") == 0) { gen("OPR", 0, 10, &pid); }
+		else if (strcmp(relop, ">=") == 0) { gen("OPR", 0, 11, &pid); }
+		else if (strcmp(relop, "<=") == 0) { gen("OPR", 0, 13, &pid); }
+		else if (strcmp(relop, "<>") == 0) { gen("OPR", 0, 9, &pid); }
+		else if (strcmp(relop, "=") == 0) { gen("OPR", 0, 8, &pid); }
+		gen("JPC", 0, 0, &pid);
+		//Emit( "j", NULL, NULL, NULL);
+		gen("JMP", 0, 0, &pid);
+
 		
 	}
 	else if (tokenList[curIndex].first == $ODD) {
 		Advance();
 		id1 = Exp();
-		*t = makelist(nextquad);
-		*f = makelist(nextquad + 1);
-		Emit( "odd", id1, NULL, NULL);
-		Emit( "j", NULL, NULL, NULL);
+		*t = makelist(nextquad + 2);
+		*f = makelist(nextquad + 3);
+		//Emit( "odd", id1, NULL, NULL);
+		gen("LOD", Level - id1.second, id1.first, &pid);
+		gen("OPR", 0, 6, &pid);
+		gen("JPC", 0, 0, &pid);
+		//Emit( "j", NULL, NULL, NULL);
+		gen("JMP", 0,0, &pid);
+
 		
 	}
 	else {
@@ -403,18 +446,24 @@ void Lexp(list** t,list** f)		//<lexp> → <exp> <lop> <exp>|odd <exp>
 	}
 }
 
-int Exp()			//<exp> → [+|-]<term>{<aop><term>}
+std::pair<int,int> Exp()			//<exp> → [+|-]<term>{<aop><term>}
 {	
 	char op[6];
-	int term1;
-	int term2;
-	int exp = NULL;
-	int exp1;
+	std::pair<int, int> term1;
+	std::pair<int, int> term2;
+	std::pair<int, int> exp;
+	std::pair<int, int> exp1;
 	if (tokenList[curIndex].first == $ADD || tokenList[curIndex].first == $SUB) {
 		if (tokenList[curIndex].first == $SUB) {
 			strcpy_s(op,"-\0");
 		}
 		Advance();
+		if (strcmp(op, "-") == 0) {
+		exp = newtemp();
+		//Emit( op, exp1, NULL, exp);
+		gen("LOD", Level - exp1.second, exp1.first,&pid);
+		gen("OPR", 0, 1,&pid);
+		gen("STO", Level - exp.second, exp.first, &pid);	}
 	}
 	term1 = Term();
 	exp1 = term1;
@@ -428,24 +477,32 @@ int Exp()			//<exp> → [+|-]<term>{<aop><term>}
 		exp = newtemp();
 		Aop();
 		term2 = Term();
-		Emit( op, exp1, term2, exp);
+		//Emit( op, exp1, term2, exp);
+		if(strcmp(op,"+")==0){
+			gen("LOD", Level - exp1.second, exp1.first, &pid);
+			gen("LOD", Level - term2.second, term2.first, &pid);
+			gen("OPR", 0, 2, &pid);
+			gen("STO", Level - exp.second, exp.first, &pid);
+		}
+		else {
+			gen("LOD", Level - exp1.second, exp1.first, &pid);
+			gen("LOD", Level - term2.second, term2.first, &pid);
+			gen("OPR", 0, 3, &pid);
+			gen("STO", Level - exp.second, exp.first, &pid);
+		}
 		exp1 = exp;
 	}
-	if (strcmp(op, "-") == 0) {
-		exp = newtemp();
-		Emit( op, exp1, NULL, exp);
-		return exp;
-	}
+	
 	return exp;
 }
 
-int Term()			//<term> → <factor>{<mop><factor>}
+std::pair<int,int> Term()			//<term> → <factor>{<mop><factor>}
 {
-	int factor1;
-	int factor2;
+	std::pair<int,int>  factor1;
+	std::pair<int, int> factor2;
 	char op[6];
-	int term;
-	int term1;
+	std::pair<int, int> term;
+	std::pair<int, int> term1;
 	factor1 = Factor();
 	term = factor1;
 	term1 = factor1;
@@ -457,25 +514,38 @@ int Term()			//<term> → <factor>{<mop><factor>}
 		term = newtemp();
 		Mop();
 		factor2 = Factor();
-		Emit( op, term1, factor2, term);
+		//Emit( op, term1, factor2, term);
+		if(strcmp(op,"*")==0){
+			gen("LOD", Level - term1.second, term1.first, &pid);
+			gen("LOD", Level - factor2.second, factor2.first, &pid);
+			gen("OPR", 0, 4, &pid);
+			gen("STO", Level - term.second, term.first, &pid);
+		}
+		else
+		{
+			gen("LOD", Level - term1.second, term1.first, &pid);
+			gen("LOD", Level - factor2.second, factor2.first, &pid);
+			gen("OPR", 0, 5, &pid);
+			gen("STO", Level - term.second, term.first, &pid);
+		}
 		term1 = term;
 	}
 	return term;
 }
 
-int Factor()			//<factor>→<id>|<integer>|(<exp>)
+std::pair<int,int> Factor()			//<factor>→<id>|<integer>|(<exp>)
 {
 	if (tokenList[curIndex].first == $ID) {
 		Id();
 		tableItem* tmp = lookup(getStr());
-		return (tmp->varInfo->offset);
+		return (std::pair<int,int>(tmp->varInfo->offset,tmp->tablePtr->level));
 	}
 	else if (tokenList[curIndex].first == $INT) {
-		return Integer();
+		return std::pair<int,int>(Integer(),0);
 	}
 	else if (tokenList[curIndex].first == $LPAR) {
 		Advance();
-		int t = Exp();
+		std::pair<int,int> t = Exp();
 		if (tokenList[curIndex].first == $RPAR) {
 			Advance();
 			return t;
@@ -839,9 +909,11 @@ void ProgramParser() {
 	if (!isFinish) {
 		std::cout << "遇到无法跳过的错误！" << '\n';
 	}
-	printThreeCode();
-	genPcode();
-	printPcode();
-	runPcode();
+	if(!isError) {
+		gen("INT", 0,table[0]->width, 0);
+		printPcode();
+		runPcode();
+	}
+	
 	
 }

@@ -1,5 +1,6 @@
 #pragma once
 #define lengthMax 20
+#include"PL0Common.h"
 enum class types{VAR,PROC};
 enum class varTypes{CONST,VAR,PAR};
 extern int tblptr;
@@ -47,9 +48,8 @@ void enterProc(Table*, const char[lengthMax],Table*,int);//ÔÚ·ûºÅ±íÖÐÎªÇ¶Ì×·ûºÅ±
 tableItem* lookup(const char[lengthMax]);//²éÕÒ·ûºÅ±íÖÐÊÇ·ñÓÐÄ³Ò»±äÁ¿
 void errorHandle(const char*);
 void errorHandle();
-int newtemp();
-void gen(const char*, int*, int, int*);
-void genPcode();
+std::pair<int,int> newtemp();
+void gen(const char*, int, int, int*);
 void printPcode();
 void runPcode();
 

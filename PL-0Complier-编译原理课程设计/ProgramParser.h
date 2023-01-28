@@ -23,9 +23,9 @@ void Statement();	/*<statement> ¡ú <id> := <exp>
 						| read(<id>{£¬<id>})
 						| write(<exp>{, <exp>})*/
 void Lexp(list**,list**);		//<lexp> ¡ú <exp> <lop> <exp>|odd <exp>
-int Exp();			//<exp> ¡ú [+|-]<term>{<aop><term>}
-int Term();		//<term> ¡ú <factor>{<mop><factor>}
-int Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
+std::pair<int,int> Exp();			//<exp> ¡ú [+|-]<term>{<aop><term>}
+std::pair<int,int> Term();		//<term> ¡ú <factor>{<mop><factor>}
+std::pair<int,int> Factor();		//<factor>¡ú<id>|<integer>|(<exp>)
 char* Lop();			//<lop> ¡ú =|<>|<|<=|>|>=
 void Aop();			//<aop> ¡ú + | -
 void Mop();			//<mop> ¡ú *|/

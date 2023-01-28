@@ -21,24 +21,17 @@ typedef std::pair<int, int> Token;
 extern int threeId;
 extern int nextquad;
 
-struct threeCodeItem
-{
-	char op[10];
-	int arg1;
-	int arg2;
-	int result;
-};
 typedef struct list{
 	int id;
+	int level;
 	list* next;
 }list;
 struct Pcode
 {
 	char f[5]; //操作码
-	int *l;//层差
+	int l;//层差
 	int a;//数值
 };
-extern threeCodeItem* threeCode[500];
 //保留字及运算符定义
 #define $BEGIN 1
 #define	$CALL 2
@@ -94,11 +87,7 @@ extern threeCodeItem* threeCode[500];
 #define $CommaExpected 18
 #define $ConstExpected 19
 #define STACK_LENGTH 400
-
-
-void Emit(const char[10], int, int, int);//生成三元式
-list* makelist(int);
+list* makelist(int,int l = 0);
 list* merge(list*, list*);
 void backpatch(list*, int);
-void printThreeCode();
-void genPcode();
+void backpatch(list*, int, int);
